@@ -1,0 +1,27 @@
+{
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
+    "exclude": ["node_modules"],
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "outDir": "./dist/",
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "module": "preserve",
+        "target": "ESNext",
+        "allowJs": true,
+        "moduleResolution": "node",
+        "plugins": [
+            {
+                "name": "@styled/typescript-styled-plugin"
+            }
+        ],
+        "baseUrl": "./",
+        "paths": {
+            "App": ["src/app/index.js"],
+            "App/*": ["src/app/*"],
+            "Client/*": ["src/client/*"],
+            "Support/*": ["src/support/*"],
+            "Extern/*": ["src/extern/*"],
+        }
+    }
+}

@@ -48,8 +48,12 @@ export default [
             alias: {
                 Assets: path.resolve(__dirname, "assets/"),
 
-                App: path.resolve(__dirname, "src/app/"),
-                "App$": path.resolve(__dirname, "src/app/index.js"),
+                App: path.resolve(__dirname, "src/App/"),
+                "App$": path.resolve(__dirname, "src/App/index.js"),
+
+                Doc: path.resolve(__dirname, "src/Doc/"),
+                "Doc$": path.resolve(__dirname, "src/Doc/index.js"),
+
                 Client: path.resolve(__dirname, "src/client/"),
                 Support: path.resolve(__dirname, "src/support/"),
                 Extern: path.resolve(__dirname, "src/extern/"),

@@ -1,4 +1,4 @@
-import Result from "./result";
+import Result from "./Result";
 
 
 export async function toDataURL (url: string): Promise<Result<{data: string}>> {

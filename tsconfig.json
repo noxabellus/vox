@@ -17,8 +17,12 @@
         ],
         "baseUrl": "./",
         "paths": {
-            "App": ["src/app/index.js"],
-            "App/*": ["src/app/*"],
+            "App": ["src/App/index.js"],
+            "App/*": ["src/App/*"],
+
+            "Doc": ["src/Doc/index.js"],
+            "Doc/*": ["src/Doc/*"],
+
             "Client/*": ["src/client/*"],
             "Support/*": ["src/support/*"],
             "Extern/*": ["src/extern/*"],

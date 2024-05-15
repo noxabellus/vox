@@ -9,32 +9,23 @@ import Editor from "./modes/Editor";
 import { createEditor } from "Model/Editor";
 import { createDocument } from "Document";
 import { FunctionComponent, ReactElement, useState } from "react";
+import { deepCopy } from "Support/deep";
+import { arrayFromFunction } from "Support/array";
 
 
 
 const Body = styled.div`
     flex-grow: 1;
-
+    max-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: stretch;
+    align-items: stretch;
 
     font-family: Roboto;
     background-color: #f0f0f0;
     color: #202020;
     border-radius: 1em;
-
-    & h1 {
-        font-size: 2em;
-        line-height: 1.25em;
-    }
-
-    & blockquote {
-        border: 1px solid #202020;
-        border-radius: .25em;
-        padding: 1em 1em;
-    }
 `;
 
 
@@ -54,7 +45,7 @@ const initialValue: Descendant[] = [
             { text: "." },
         ],
     },
-    { type: "paragraph", children: [{text: ""}] },
+    ...arrayFromFunction(40, () => deepCopy({ type: "paragraph", children: [{text: ""}] })),
     {
         type: "block-quote",
         children: [

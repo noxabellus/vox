@@ -5,6 +5,7 @@ import { Text } from "Document/Text";
 
 
 export default function leafRenderer ({leaf, attributes, children}: RenderLeafProps): ReactElement {
+    console.log(`leaf "${leaf.text}"`, Object.keys((leaf as any).decoration || {}).join(", "));
     const style = {};
 
     if (Text.isFormattedText(leaf)) {

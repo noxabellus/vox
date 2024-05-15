@@ -20,8 +20,11 @@
             "App": ["src/App/index.js"],
             "App/*": ["src/App/*"],
 
-            "Doc": ["src/Doc/index.js"],
-            "Doc/*": ["src/Doc/*"],
+            "Model": ["src/Model/index.js"],
+            "Model/*": ["src/Model/*"],
+
+            "Document": ["src/Document/index.js"],
+            "Document/*": ["src/Document/*"],
 
             "Client/*": ["src/client/*"],
             "Support/*": ["src/support/*"],

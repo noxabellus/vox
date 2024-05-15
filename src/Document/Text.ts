@@ -1,26 +1,23 @@
 export * as Text from "./Text";
 
-export default Text;
 
+export type Text
+    = UnformattedText
+    | FormattedText
+    ;
 
-declare module "./Text" {
-    export type UnformattedText = { text: string };
+export type UnformattedText = { text: string };
 
-    export type FormattedText = UnformattedText & {
-        decoration: Partial<TextDecoration>,
-    };
+export type FormattedText = UnformattedText & {
+    decoration: Partial<TextDecoration>,
+};
 
-    export type TextDecoration = {
-        bold: true,
-        italic: true,
-        underline: true,
-    };
+export type TextDecoration = {
+    bold: true,
+    italic: true,
+    underline: true,
+};
 
-    export type Text
-        = UnformattedText
-        | FormattedText
-        ;
-}
 
 
 export function isText (text: any): text is Text {

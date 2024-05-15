@@ -1,7 +1,10 @@
 import { NonNull } from "./nullable";
+import rangeOf from "./rangeOf";
+
+export * as Result from "./Result";
 
 
-export type Status = "success" | "failure" | "error";
+export type Result<T, E extends NonNull = string> = Success<T> | Failure | Error<E>;
 
 export type Success<T> = {
     status: "success",
@@ -17,46 +20,49 @@ export type Error<E> = {
     body: E,
 }
 
-export type Result<T, E extends NonNull = string> = Success<T> | Failure | Error<E>;
 
-export const Result = {
-    Success<T>(body: T): Success<T> {
-        return { status: "success", body };
-    },
+export type Status = Result<unknown, NonNull>["status"];
+export const Statuses = rangeOf<Status>()("success", "failure", "error");
 
-    Failure(): Failure {
-        return { status: "failure" };
-    },
 
-    Error<E extends NonNull>(body: E): Error<E> {
-        return { status: "error", body };
-    },
+export function Success<T>(body: T): Success<T> {
+    return { status: "success", body };
+}
 
-    isSuccess<T, E extends NonNull>(res: Result<T, E>): res is Success<T> {
-        return res.status === "success";
-    },
+export function Failure(): Failure {
+    return { status: "failure" };
+}
 
-    notSuccess<T, E extends NonNull>(res: Result<T, E>): res is Failure | Error<E> {
-        return res.status !== "success";
-    },
+export function Error<E extends NonNull>(body: E): Error<E> {
+    return { status: "error", body };
+}
 
-    isFailure<T, E extends NonNull>(res: Result<T, E>): res is Failure {
-        return res.status === "failure";
-    },
+export function isResult<T, E extends NonNull>(res: Result<T, E>): res is Result<T, E> {
+    return Statuses.includes(res.status);
+}
 
-    isError<T, E extends NonNull>(res: Result<T, E>): res is Error<E> {
-        return res.status === "error";
-    },
+export function isSuccess<T, E extends NonNull>(res: Result<T, E>): res is Success<T> {
+    return res.status === "success";
+}
 
-    problemMessage<T, E extends NonNull>(res: Result<T, E>): string {
-        if (Result.isFailure(res)) {
-            return "unknown failure";
-        } else if (Result.isError(res)) {
-            return res.body.toString();
-        } else {
-            return "not a failure";
-        }
-    },
-};
+export function notSuccess<T, E extends NonNull>(res: Result<T, E>): res is Failure | Error<E> {
+    return res.status !== "success";
+}
 
-export default Result;
+export function isFailure<T, E extends NonNull>(res: Result<T, E>): res is Failure {
+    return res.status === "failure";
+}
+
+export function isError<T, E extends NonNull>(res: Result<T, E>): res is Error<E> {
+    return res.status === "error";
+}
+
+export function problemMessage<T, E extends NonNull>(res: Result<T, E>): string {
+    if (Result.isFailure(res)) {
+        return "unknown failure";
+    } else if (Result.isError(res)) {
+        return res.body.toString();
+    } else {
+        return "not a failure";
+    }
+}

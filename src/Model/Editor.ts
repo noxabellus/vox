@@ -1,0 +1,124 @@
+import { PathLike } from "original-fs";
+import { createContext, useContext, useMemo } from "react";
+
+import { Document } from "Document";
+
+import { Slate, Api, createSlate } from "./Slate";
+import { App, useApp } from "./App";
+import rangeOf from "Support/rangeOf";
+import panic from "Support/panic";
+
+
+export * as Editor from "./Editor";
+
+
+export type Id = number;
+
+export type Editor = {
+    id: Id,
+    slate: Slate,
+    filePath?: PathLike,
+    title: string,
+};
+
+export type Dispatch = (action: Action) => Promise<void>;
+
+export type Action
+    = SetTitle
+    | SetFilePath
+    | SlateAction
+    ;
+
+export type SetTitle = {
+    type: "set-title",
+    value: string,
+};
+
+export type SetFilePath = {
+    type: "set-file-path",
+    value: PathLike,
+};
+
+export type SlateAction = {
+    type: "slate-action",
+    value: Slate.Action,
+};
+
+export type ActionName = Action["type"];
+export const ActionNames = rangeOf<ActionName>()("set-title", "set-file-path", "slate-action");
+
+export function isAction (action: Action): action is Action {
+    return ActionNames.includes(action.type as ActionName);
+}
+
+
+export function createEditor (id: number, filePath?: PathLike, document?: Document): Editor {
+    return {
+        id,
+        filePath,
+        title: document?.title || "untitled",
+        slate: createSlate(document),
+    };
+}
+
+
+const IdCtx = createContext<Id>(null as any);
+
+export const IdProvider = IdCtx.Provider;
+
+export const useId = () => useContext(IdCtx);
+
+
+export function deriveEditorFromIdAndApp (editorId: Editor.Id, app: App, appDispatch: App.Dispatch): readonly [Editor, Dispatch] {
+    return useMemo(() => {
+        const editor = app.editors.find(editor => editor.id === editorId);
+        if (!editor) panic("Editor not found in `deriveEditorFromId`", editorId);
+
+        return [editor, (editorAction: Action) => appDispatch({type: "editor-action", value: {editorId, editorAction}})];
+    }, [editorId, app, appDispatch]);
+}
+
+export function deriveEditorFromId (editorId: Editor.Id): readonly [Editor, Dispatch, App, App.Dispatch] {
+    const [app, appDispatch] = useApp();
+    return [...deriveEditorFromIdAndApp(editorId, app, appDispatch), app, appDispatch];
+}
+
+export function deriveEditorFromApp (app: App, appDispatch: App.Dispatch): readonly [Editor, Dispatch] {
+    const id = useId();
+    return deriveEditorFromIdAndApp(id, app, appDispatch);
+}
+
+export function useEditor (): readonly [Editor, Dispatch, App, App.Dispatch] {
+    const [app, appDispatch] = useApp();
+    return [...deriveEditorFromApp(app, appDispatch), app, appDispatch];
+}
+
+
+
+export async function reducer (state: Editor, action: Action): Promise<Editor> {
+    console.log ("Editor Reducer Start", action, Api.isFocused(state.slate));
+
+    const out = {...state};
+
+    switch (action.type) {
+        case "set-title": {
+            out.title = action.value;
+        } break;
+
+        case "set-file-path": {
+            out.filePath = action.value;
+        } break;
+
+        case "slate-action": {
+            console.log("Slate Action Start");
+            await action.value(out.slate);
+            console.log("Slate Action End");
+        } break;
+
+        default: panic("Invalid Editor Action", action);
+    }
+
+    console.log("Editor Reducer End");
+
+    return out;
+}

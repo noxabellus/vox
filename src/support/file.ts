@@ -3,7 +3,7 @@ import { PathLike } from "fs";
 import fs from "fs/promises";
 
 import { dialog } from "./remote";
-import Result from "./Result";
+import { Result } from "./Result";
 import { NonNull, unsafeForceVal } from "./nullable";
 
 

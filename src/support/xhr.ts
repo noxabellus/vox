@@ -1,4 +1,4 @@
-import Result from "./Result";
+import { Result } from "./Result";
 
 
 export async function toDataURL (url: string): Promise<Result<{data: string}>> {
@@ -41,7 +41,3 @@ export async function toDataURL (url: string): Promise<Result<{data: string}>> {
         xhr.send();
     });
 }
-
-export default {
-    toDataURL,
-};

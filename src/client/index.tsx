@@ -4,6 +4,7 @@ import { forceVal } from "Support/nullable";
 
 import App from "App";
 
+(window as any).App = App;
 
 const domNode = forceVal(document.body.querySelector("#app-container"));
 

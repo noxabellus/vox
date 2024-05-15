@@ -3,7 +3,12 @@ import "Support/remote";
 import { styled } from "styled-components";
 
 import { Descendant } from "slate";
+
+import { App as Model } from "Model/App";
 import Editor from "./modes/Editor";
+import { createEditor } from "Model/Editor";
+import { createDocument } from "Document";
+import { FunctionComponent, ReactElement, useState } from "react";
 
 
 
@@ -72,9 +77,56 @@ const initialValue: Descendant[] = [
     }
 ];
 
+export type AppType
+    = FunctionComponent
+    & Model.Instance
+    ;
 
-export default function App () {
+
+
+
+
+function AppElement (): ReactElement {
+    const [app, updateApp] = useState(App.model);
+
+    async function appDispatch (action: Model.Action) {
+        console.log("App Dispatch Start");
+        App.model = await App.reducer(App.model, action);
+        updateApp(_ => {
+            console.log("updateApp");
+            return App.model;
+        });
+        console.log("App Dispatch End");
+    }
+
+    console.log("App");
+
     return <Body>
-        <Editor initialValue={initialValue}/>
+        <Model.Provider app={app} dispatch={appDispatch}>
+            <Editor key={`editor${0}`} editorId={0}/>
+        </Model.Provider>
     </Body>;
 }
+
+export const App: AppType = AppElement as any;
+
+App.model = {
+    mode: { name: "editor", editorId: 0 },
+    editors: [
+        createEditor(
+            0,
+            undefined,
+            createDocument("untitled", {}, initialValue)
+        )
+    ],
+    userSettings: {
+        autoSaveByDefault: false,
+        keyBindings: {},
+    },
+};
+
+App.reducer = Model.reducer;
+
+App.displayName = "App";
+
+export default App;

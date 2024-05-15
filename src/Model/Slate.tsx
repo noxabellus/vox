@@ -1,14 +1,15 @@
-import { BaseEditor, Editor as SlateEditor, createEditor} from "slate";
+import { ReactNode } from "react";
+import { BaseEditor, Editor as SlateEditor, createEditor, Selection, Range, Point} from "slate";
 import { ReactEditor, withReact, Slate as SlateContext } from "slate-react";
 import { HistoryEditor, withHistory } from "slate-history";
 
+import { Document } from "Document";
 import { Text } from "Document/Text";
 import { Element } from "Document/Element";
-import { ReactNode } from "react";
-import { Document } from "Document";
-
+import { Descendant } from "Document/hierarchy";
 
 export * as Slate from "./Slate";
+export { Selection, Range, Point };
 
 
 declare module "slate" {
@@ -25,7 +26,13 @@ export type Api = typeof SlateEditor & typeof ReactEditor & typeof HistoryEditor
 
 export type ContextProps = {
     slate: Slate,
-    children?: ReactNode | ReactNode[],
+    children: ReactNode | ReactNode[],
+} & ContextCallbacks;
+
+export type ContextCallbacks = {
+    onChange?: (value: Descendant[]) => Promise<void> | void,
+    onSelectionChange?: (selection: Selection) => Promise<void> | void,
+    onValueChange?: (value: Descendant[]) => Promise<void> | void,
 };
 
 export type Action = (slate: Slate) => Promise<void> | void;
@@ -47,8 +54,6 @@ export function createSlate(document?: Document): Slate {
     return e;
 }
 
-export function Context({slate, children}: ContextProps) {
-    return <SlateContext editor={slate} initialValue={slate.children}>
-        {children}
-    </SlateContext>;
+export function Context({slate, ...props}: ContextProps) {
+    return <SlateContext editor={slate} initialValue={slate.children} {...props} />;
 }

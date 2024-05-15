@@ -13,9 +13,9 @@ import styled from "styled-components";
 export type DocumentEditorProps = {
     placeholder?: string,
     style?: CSSProperties,
-    onKeyDown?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => void,
-    onKeyUp?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => void,
-};
+    onKeyDown?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => Promise<void> | void,
+    onKeyUp?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => Promise<void> | void,
+} & Slate.ContextCallbacks;
 
 const StyledEditable = styled(Editable)`
     padding: 1em;
@@ -40,16 +40,26 @@ const StyledEditable = styled(Editable)`
 `;
 
 
-export default function DocumentEditor ({style, placeholder, onKeyDown, onKeyUp}: DocumentEditorProps) {
+export default function DocumentEditor ({style, placeholder, onChange, onSelectionChange, onValueChange, onKeyDown, onKeyUp}: DocumentEditorProps) {
     const [app, appDispatch] = useApp();
     const [editor] = deriveEditorFromApp(app, appDispatch);
 
     console.log("DocumentEditor");
 
-    return <Slate.Context key={`slateContext${editor.id}`} slate={editor.slate}>
+    return <Slate.Context
+        key={`slateContext${editor.id}`}
+
+        slate={editor.slate}
+
+        onChange={value => onChange?.(value)}
+        onSelectionChange={selection => onSelectionChange?.(selection)}
+        onValueChange={value => onValueChange?.(value)}
+    >
         <StyledEditable
             key={`editable${editor.id}`}
 
+            onBlur={(_ => onSelectionChange?.(null))}
+            onFocus={(_ => onSelectionChange?.(editor.slate.selection))}
             onKeyDown={e => onKeyDown?.(e, app, appDispatch)}
             onKeyUp={e => onKeyUp?.(e, app, appDispatch)}
 

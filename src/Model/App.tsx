@@ -1,7 +1,7 @@
 import { ReactNode, createContext, useContext } from "react";
 import { Editor } from "./Editor";
 import { Mode } from "./Mode";
-import rangeOf from "Support/rangeOf";
+import RangeOf from "Support/RangeOf";
 import { UserSettings } from "./UserSettings";
 import panic from "Support/panic";
 
@@ -43,7 +43,7 @@ export type SwitchMode = {
 
 
 export type ActionName = Action["type"];
-export const ActionNames = rangeOf<ActionName>()("editor-action", "switch-mode");
+export const ActionNames = RangeOf<ActionName>()("editor-action", "switch-mode");
 
 export function isAction (action: Action): action is Action {
     return ActionNames.includes(action.type as ActionName);
@@ -76,7 +76,7 @@ export type Instance = {
 
 
 export async function reducer (state: App, action: Action): Promise<App> {
-    console.log("App Reducer Start", action);
+    console.log("App Reducer", action);
 
     const out = {...state};
 
@@ -93,8 +93,6 @@ export async function reducer (state: App, action: Action): Promise<App> {
 
         default: panic("Invalid App Action", action);
     }
-
-    console.log("App Reducer End");
 
     return out;
 }

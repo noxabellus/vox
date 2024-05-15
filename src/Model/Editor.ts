@@ -5,7 +5,7 @@ import { Document } from "Document";
 
 import { Slate, Api, createSlate } from "./Slate";
 import { App, useApp } from "./App";
-import rangeOf from "Support/rangeOf";
+import RangeOf from "Support/RangeOf";
 import panic from "Support/panic";
 
 
@@ -45,7 +45,7 @@ export type SlateAction = {
 };
 
 export type ActionName = Action["type"];
-export const ActionNames = rangeOf<ActionName>()("set-title", "set-file-path", "slate-action");
+export const ActionNames = RangeOf<ActionName>()("set-title", "set-file-path", "slate-action");
 
 export function isAction (action: Action): action is Action {
     return ActionNames.includes(action.type as ActionName);
@@ -96,7 +96,7 @@ export function useEditor (): readonly [Editor, Dispatch, App, App.Dispatch] {
 
 
 export async function reducer (state: Editor, action: Action): Promise<Editor> {
-    console.log ("Editor Reducer Start", action, Api.isFocused(state.slate));
+    console.log ("Editor Reducer", action, Api.isFocused(state.slate));
 
     const out = {...state};
 
@@ -110,15 +110,12 @@ export async function reducer (state: Editor, action: Action): Promise<Editor> {
         } break;
 
         case "slate-action": {
-            console.log("Slate Action Start");
+            console.log("Slate Action");
             await action.value(out.slate);
-            console.log("Slate Action End");
         } break;
 
         default: panic("Invalid Editor Action", action);
     }
-
-    console.log("Editor Reducer End");
 
     return out;
 }

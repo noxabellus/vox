@@ -1,22 +1,26 @@
+import RangeOf from "Support/RangeOf";
+import CSS from "Support/CSS";
+
 export * as Text from "./Text";
 
 
 export type Text
     = UnformattedText
-    | FormattedText
+    & Partial<TextDecoration>
     ;
 
-export type UnformattedText = { text: string };
-
-export type FormattedText = UnformattedText & {
-    decoration: Partial<TextDecoration>,
+export type UnformattedText = {
+    text: string,
 };
 
 export type TextDecoration = {
-    bold: true,
-    italic: true,
-    underline: true,
+    bold: boolean,
+    italic: boolean,
+    underline: boolean,
 };
+
+export type TextDecorationType = keyof TextDecoration;
+export const TextDecorationTypes = RangeOf<TextDecorationType>()("bold", "italic", "underline");
 
 
 
@@ -42,19 +46,38 @@ export function asUnformattedText (text: Text): UnformattedText | undefined {
     }
 }
 
-export function isFormattedText (text: Text): text is FormattedText {
+export function isFormattedText (text: Text): boolean {
     return isText(text)
-        && (text as FormattedText).decoration !== undefined;
+        && Object.keys(text).length > 1
+        ;;
 }
 
-export function asFormattedText (text: Text): FormattedText | undefined {
-    if (isFormattedText(text)) {
-        return text;
-    }
+export function extractTextFormat (text: Text, callback: (k: keyof TextDecoration, v?: TextDecoration[typeof k]) => void): void {
+    TextDecorationTypes.forEach(key => {
+        callback(key, text[key]);
+    });
 }
 
-export const textDecorators: {[K in keyof TextDecoration]: (css: any) => void} = {
-    bold: css => css.fontWeight = "bold",
-    italic: css => css.fontStyle = "italic",
-    underline: css => css.textDecoration = "underline",
+export function applyTextFormat (text: Text, css: CSS) {
+    extractTextFormat(text, (key, value) => {
+        if (value) {
+            textDecorators[key](css, value);
+        }
+    });
+}
+
+function triSwitch (propName: keyof CSS, ifEnabled: CSS[typeof propName], ifDisabled: CSS[typeof propName]) {
+    return (css: CSS, enabled?: boolean): void => {
+        switch (enabled) {
+            // @ts-expect-error type is too complex
+            case true: css[propName] = ifEnabled; break;
+            case false: css[propName] = ifDisabled; break;
+        }
+    };
+}
+
+export const textDecorators: {[K in keyof TextDecoration]: (css: CSS, enabled?: boolean) => void} = {
+    bold: triSwitch("fontWeight", "bold", "normal"),
+    italic: triSwitch("fontStyle", "italic", "normal"),
+    underline: triSwitch("textDecoration", "underline", "none"),
 };

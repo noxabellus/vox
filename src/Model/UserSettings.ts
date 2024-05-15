@@ -1,4 +1,4 @@
-import rangeOf from "Support/rangeOf";
+import RangeOf from "Support/RangeOf";
 import { KeyBindings } from "./KeyBindings";
 
 
@@ -12,7 +12,7 @@ export type UserSettings = {
 
 
 export type UserSettingsField = keyof UserSettings;
-export const UserSettingsFields = rangeOf<UserSettingsField>()("autoSaveByDefault", "keyBindings");
+export const UserSettingsFields = RangeOf<UserSettingsField>()("autoSaveByDefault", "keyBindings");
 
 
 export function isUserSettings (settings: any): settings is UserSettings {

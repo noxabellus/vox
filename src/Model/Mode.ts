@@ -1,4 +1,4 @@
-import rangeOf from "Support/rangeOf";
+import RangeOf from "Support/RangeOf";
 import { Editor } from "./Editor";
 
 
@@ -35,7 +35,7 @@ class ModeTypes implements Modes {
 };
 
 
-export const ModeNames = rangeOf<ModeName>()("splash", "editor", "userSettings");
+export const ModeNames = RangeOf<ModeName>()("splash", "editor", "userSettings");
 
 
 export function isMode (mode: Mode): mode is Mode {

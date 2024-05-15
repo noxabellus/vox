@@ -57,6 +57,8 @@ export default [
                 Model: path.resolve(__dirname, "src/Model/"),
                 "Model$": path.resolve(__dirname, "src/Model/index.js"),
 
+                Elements: path.resolve(__dirname, "src/elements/"),
+
                 Client: path.resolve(__dirname, "src/client/"),
                 Support: path.resolve(__dirname, "src/support/"),
                 Extern: path.resolve(__dirname, "src/extern/"),

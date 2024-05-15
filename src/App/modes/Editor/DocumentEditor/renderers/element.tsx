@@ -3,8 +3,6 @@ import { RenderElementProps } from "slate-react";
 
 
 export default function elementRenderer ({element, attributes, children}: RenderElementProps): ReactElement {
-    console.log("element", element.type);
-
     switch (element.type) {
         case "heading": {
             const Lvl = ["h1", "h2", "h3", "h4", "h5", "h6"][element.level - 1];

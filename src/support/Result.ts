@@ -1,5 +1,5 @@
 import { NonNull } from "./nullable";
-import rangeOf from "./rangeOf";
+import RangeOf from "./RangeOf";
 
 export * as Result from "./Result";
 
@@ -22,7 +22,7 @@ export type Error<E> = {
 
 
 export type Status = Result<unknown, NonNull>["status"];
-export const Statuses = rangeOf<Status>()("success", "failure", "error");
+export const Statuses = RangeOf<Status>()("success", "failure", "error");
 
 
 export function Success<T>(body: T): Success<T> {

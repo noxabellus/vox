@@ -2,7 +2,7 @@ import "Support/remote";
 
 import { styled } from "styled-components";
 
-import { Descendant } from "slate";
+import { Descendant } from "Document/hierarchy";
 
 import { App as Model } from "Model/App";
 import Editor from "./modes/Editor";
@@ -34,14 +34,14 @@ const initialValue: Descendant[] = [
         type: "heading",
         level: 1,
         children: [
-            { text: "A heading!", decoration: { italic: true, underline: true } },
+            { text: "A heading!", italic: true, underline: true },
         ],
     },
     {
         type: "paragraph",
         children: [
             { text: "A line of text in a " },
-            { text: "paragraph", decoration: { bold: true } },
+            { text: "paragraph", bold: true },
             { text: "." },
         ],
     },
@@ -53,14 +53,14 @@ const initialValue: Descendant[] = [
                 type: "heading",
                 level: 1,
                 children: [
-                    { text: "A heading!", decoration: { italic: true, underline: true } },
+                    { text: "A heading!", italic: true, underline: true },
                 ],
             },
             {
                 type: "paragraph",
                 children: [
                     { text: "A line of text in a " },
-                    { text: "paragraph", decoration: { bold: true } },
+                    { text: "paragraph", bold: true },
                     { text: "." },
                 ],
             },
@@ -81,16 +81,9 @@ function AppElement (): ReactElement {
     const [app, updateApp] = useState(App.model);
 
     async function appDispatch (action: Model.Action) {
-        console.log("App Dispatch Start");
         App.model = await App.reducer(App.model, action);
-        updateApp(_ => {
-            console.log("updateApp");
-            return App.model;
-        });
-        console.log("App Dispatch End");
+        updateApp(App.model);
     }
-
-    console.log("App");
 
     return <Body>
         <Model.Provider app={app} dispatch={appDispatch}>

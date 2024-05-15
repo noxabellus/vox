@@ -26,6 +26,8 @@
             "Document": ["src/Document/index.js"],
             "Document/*": ["src/Document/*"],
 
+            "Elements/*": ["src/elements/*"],
+
             "Client/*": ["src/client/*"],
             "Support/*": ["src/support/*"],
             "Extern/*": ["src/extern/*"],

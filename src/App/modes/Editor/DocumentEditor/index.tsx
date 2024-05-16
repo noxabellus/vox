@@ -26,6 +26,12 @@ const StyledEditable = styled(Editable)`
     width: 8.5in;
     margin: 1em;
 
+    /* caret-color: transparent !important;
+
+    & *::selection {
+        background: none;
+        color: inherit;
+    } */
 
     & h1 {
         font-size: 2em;

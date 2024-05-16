@@ -76,8 +76,6 @@ export type Instance = {
 
 
 export async function reducer (state: App, action: Action): Promise<App> {
-    console.log("App Reducer", action);
-
     const out = {...state};
 
     switch (action.type) {

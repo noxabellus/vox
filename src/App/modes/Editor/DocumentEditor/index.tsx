@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent } from "react";
 import { Editable } from "slate-react";
 
-import { Slate }  from "Model/Slate";
+import { Selection, Slate }  from "Model/Slate";
 import { App, useApp } from "Model/App";
 import { deriveEditorFromApp } from "Model/Editor";
 
@@ -13,6 +13,8 @@ import styled from "styled-components";
 export type DocumentEditorProps = {
     placeholder?: string,
     style?: CSSProperties,
+    onBlur?: () => Promise<void> | void,
+    onFocus?: (selection: Selection) => Promise<void> | void,
     onKeyDown?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => Promise<void> | void,
     onKeyUp?: (e: KeyboardEvent, app: App, dispatch: App.Dispatch) => Promise<void> | void,
 } & Slate.ContextCallbacks;
@@ -23,7 +25,6 @@ const StyledEditable = styled(Editable)`
     height: fit-content;
     width: 8.5in;
     margin: 1em;
-
 
 
     & h1 {
@@ -40,15 +41,11 @@ const StyledEditable = styled(Editable)`
 `;
 
 
-export default function DocumentEditor ({style, placeholder, onChange, onSelectionChange, onValueChange, onKeyDown, onKeyUp}: DocumentEditorProps) {
+export default function DocumentEditor ({style, placeholder, onBlur, onFocus, onChange, onSelectionChange, onValueChange, onKeyDown, onKeyUp}: DocumentEditorProps) {
     const [app, appDispatch] = useApp();
     const [editor] = deriveEditorFromApp(app, appDispatch);
 
-    console.log("DocumentEditor");
-
     return <Slate.Context
-        key={`slateContext${editor.id}`}
-
         slate={editor.slate}
 
         onChange={value => onChange?.(value)}
@@ -56,10 +53,8 @@ export default function DocumentEditor ({style, placeholder, onChange, onSelecti
         onValueChange={value => onValueChange?.(value)}
     >
         <StyledEditable
-            key={`editable${editor.id}`}
-
-            onBlur={(_ => onSelectionChange?.(null))}
-            onFocus={(_ => onSelectionChange?.(editor.slate.selection))}
+            onBlur={(_ => onBlur?.())}
+            onFocus={(_ => onFocus?.(editor.slate.selection))}
             onKeyDown={e => onKeyDown?.(e, app, appDispatch)}
             onKeyUp={e => onKeyUp?.(e, app, appDispatch)}
 

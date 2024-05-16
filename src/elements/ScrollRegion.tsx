@@ -70,7 +70,7 @@ const ScrollStyles = styled(Scrollbar)`
     }
 `;
 
-export type ScrollRegionProps<C extends PropQueryable> = LocalScrollRegionProps<C> & PropsWithChildren<PropsOf<C>>;
+export type ScrollRegionProps<C extends PropQueryable> = LocalScrollRegionProps<C> & Omit<PropsWithChildren<PropsOf<C>>, "key">;
 
 type LocalScrollRegionProps<C extends PropQueryable> = {
     contentNode?: C
@@ -83,8 +83,8 @@ export default function ScrollRegion<C extends PropQueryable = ReactHTMLElement<
     return <ScrollStyles
         disableTracksWidthCompensation={true}
         noDefaultStyles={true}
-        contentProps={{renderer: ({elementRef, style: style2, ...props2}: ElementPropsWithElementRef<PropsOf<C>>) => {
-            return <ContentNode ref={elementRef} {...{...{...props, ...props2, style: {...style, ...style2}}}} />;
+        contentProps={{renderer: ({key, elementRef, style: style2, ...props2}: ElementPropsWithElementRef<PropsOf<C>>) => {
+            return <ContentNode key={key} ref={elementRef} {...{...{...props, ...props2, style: {...style, ...style2}}}} />;
         }}}
     >
         {children}

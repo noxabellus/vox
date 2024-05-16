@@ -87,7 +87,7 @@ function AppElement (): ReactElement {
 
     return <Body>
         <Model.Provider app={app} dispatch={appDispatch}>
-            <Editor key={`editor${0}`} editorId={0}/>
+            <Editor editorId={0}/>
         </Model.Provider>
     </Body>;
 }

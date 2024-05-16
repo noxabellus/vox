@@ -3,7 +3,7 @@ import { createContext, useContext, useMemo } from "react";
 
 import { Document } from "Document";
 
-import { Slate, Api, createSlate } from "./Slate";
+import { Slate, createSlate } from "./Slate";
 import { App, useApp } from "./App";
 import RangeOf from "Support/RangeOf";
 import panic from "Support/panic";
@@ -96,8 +96,6 @@ export function useEditor (): readonly [Editor, Dispatch, App, App.Dispatch] {
 
 
 export async function reducer (state: Editor, action: Action): Promise<Editor> {
-    console.log ("Editor Reducer", action, Api.isFocused(state.slate));
-
     const out = {...state};
 
     switch (action.type) {
@@ -110,7 +108,6 @@ export async function reducer (state: Editor, action: Action): Promise<Editor> {
         } break;
 
         case "slate-action": {
-            console.log("Slate Action");
             await action.value(out.slate);
         } break;
 

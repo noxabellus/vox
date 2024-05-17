@@ -9,9 +9,6 @@ import Editor from "./modes/Editor";
 import { createEditor } from "Model/Editor";
 import { createDocument } from "Document";
 import { FunctionComponent, ReactElement, useState } from "react";
-import { deepCopy } from "Support/deep";
-import { arrayFromFunction } from "Support/array";
-
 
 
 const Body = styled.div`
@@ -28,45 +25,7 @@ const Body = styled.div`
     border-radius: 1em;
 `;
 
-
-const initialValue: Descendant[] = [
-    {
-        type: "heading",
-        level: 1,
-        children: [
-            { text: "A heading!", italic: true, underline: true },
-        ],
-    },
-    {
-        type: "paragraph",
-        children: [
-            { text: "A line of text in a " },
-            { text: "paragraph", bold: true },
-            { text: "." },
-        ],
-    },
-    ...arrayFromFunction(40, () => deepCopy({ type: "paragraph", children: [{text: ""}] })),
-    {
-        type: "block-quote",
-        children: [
-            {
-                type: "heading",
-                level: 1,
-                children: [
-                    { text: "A heading!", italic: true, underline: true },
-                ],
-            },
-            {
-                type: "paragraph",
-                children: [
-                    { text: "A line of text in a " },
-                    { text: "paragraph", bold: true },
-                    { text: "." },
-                ],
-            },
-        ],
-    }
-];
+import initialValue from "Model/minimal.js";
 
 export type AppType
     = FunctionComponent
@@ -100,7 +59,7 @@ App.model = {
         createEditor(
             0,
             undefined,
-            createDocument("untitled", {}, initialValue)
+            createDocument("untitled", {}, initialValue as Descendant[])
         )
     ],
     userSettings: {

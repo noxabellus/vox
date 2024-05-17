@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { BaseEditor, Editor as SlateEditor, createEditor, Selection, Range, Point} from "slate";
-import { ReactEditor, withReact, Slate as SlateContext } from "slate-react";
+import { BaseEditor, Editor as SlateEditor, createEditor, Selection, Range, Point, RangeRef } from "slate";
+import { ReactEditor, withReact, Slate as SlateContext, Editable } from "slate-react";
 import { HistoryEditor, withHistory } from "slate-history";
 
 import { Document } from "Document";
@@ -9,7 +9,7 @@ import { Element } from "Document/Element";
 import { Descendant } from "Document/hierarchy";
 
 export * as Slate from "./Slate";
-export { Selection, Range, Point };
+export { Selection, Range, RangeRef, Point, Editable };
 
 
 declare module "slate" {

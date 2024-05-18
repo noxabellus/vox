@@ -1,6 +1,7 @@
 
 import { deepCopy } from "Support/deep";
 import { arrayFromFunction } from "Support/array";
+import { Descendant } from "Document/hierarchy";
 
 
 export default [
@@ -40,4 +41,4 @@ export default [
             },
         ],
     }
-];
+] as Descendant[];

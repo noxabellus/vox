@@ -19,6 +19,7 @@ export type Editor = {
     slate: Slate,
     filePath?: PathLike,
     title: string,
+    width: number,
 };
 
 export type Dispatch = (action: Action) => Promise<void>;
@@ -27,6 +28,7 @@ export type Action
     = SetTitle
     | SetFilePath
     | SlateAction
+    | Resize
     ;
 
 export type SetTitle = {
@@ -44,17 +46,23 @@ export type SlateAction = {
     value: Slate.Action,
 };
 
+export type Resize = {
+    type: "resize",
+    value: number,
+};
+
 export type ActionName = Action["type"];
-export const ActionNames = RangeOf<ActionName>()("set-title", "set-file-path", "slate-action");
+export const ActionNames = RangeOf<ActionName>()("set-title", "set-file-path", "slate-action", "resize");
 
 export function isAction (action: Action): action is Action {
     return ActionNames.includes(action.type as ActionName);
 }
 
 
-export function createEditor (id: number, filePath?: PathLike, document?: Document): Editor {
+export function createEditor (id: number, width: number, filePath?: PathLike, document?: Document): Editor {
     return {
         id,
+        width,
         filePath,
         title: document?.title || "untitled",
         slate: createSlate(document),
@@ -109,6 +117,10 @@ export async function reducer (state: Editor, action: Action): Promise<Editor> {
 
         case "slate-action": {
             await action.value(out.slate);
+        } break;
+
+        case "resize": {
+            out.width = action.value;
         } break;
 
         default: panic("Invalid Editor Action", action);

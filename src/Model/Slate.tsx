@@ -57,3 +57,19 @@ export function createSlate(document?: Document): Slate {
 export function Context({slate, ...props}: ContextProps) {
     return <SlateContext editor={slate} initialValue={slate.children} {...props} />;
 }
+
+
+
+
+export function showPoint (point: Point) {
+    return `${point.path.join(".")}:${point.offset}`;
+}
+
+export function showSelection (selection?: Range | null) {
+    if (!selection) return "none";
+    const anchor = showPoint(selection.anchor);
+    const focus = showPoint(selection.focus);
+
+    if (anchor == focus) return anchor;
+    else return `${anchor} -> ${focus}`;
+}

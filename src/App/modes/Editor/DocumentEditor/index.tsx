@@ -1,7 +1,8 @@
-import { CSSProperties, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, KeyboardEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
-import RAF from "Support/RAF";
+import { useRAF } from "Support/RAF";
+import { HexRgba } from "Support/color";
 
 import ScrollRegion from "Elements/ScrollRegion";
 
@@ -13,7 +14,6 @@ import { makeRangeRef, updateRangeRef } from "Model/util";
 import leafRenderer from "./renderers/leaf";
 import elementRenderer from "./renderers/element";
 import { TextStyles, SelectionState, selectionStep, selectionStop } from "./selection";
-import { HexRgba } from "Support/color";
 
 
 export type DocumentEditorProps = {
@@ -63,32 +63,26 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
 
     const root = useRef<HTMLDivElement>(null);
 
-    const [updateSelectRAF, stopSelectRAF] = useMemo(() => {
-        console.log("RAF memo");
-        return RAF<SelectionState>({
-            state: {
-                slate: editor.slate,
-                selected,
-            },
-            onStep: selectionStep,
-            onStop: selectionStop,
-        });
-    }, []);
+    const [updateSelectRAF, stopSelectRAF] = useRAF<SelectionState>({
+        state: {
+            slate: editor.slate,
+            selected,
+        },
+        onStep: selectionStep,
+        onStop: selectionStop,
+    });
 
     useEffect(() => {
         if (root.current) {
-            console.log("setting root");
             updateSelectRAF(state => { state.slate = editor.slate; state.root = root.current as HTMLDivElement; });
         }
 
         return () => {
-            console.log("stopping RAF");
             stopSelectRAF();
         };
     }, [root]);
 
     useEffect(() => {
-        console.log("updating selected");
         updateSelectRAF(state => { state.slate = editor.slate; state.selected = selected; });
         const marks = Api.marks(editor.slate);
         setTextColor(marks?.foreground ?? defaultTextColor);
@@ -129,6 +123,7 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
 
                         onFocus?.(newSelection);
                     }}
+
                     onKeyDown={e => onKeyDown?.(e, app, appDispatch)}
                     onKeyUp={e => onKeyUp?.(e, app, appDispatch)}
 

@@ -1,32 +1,18 @@
-import { IdProvider, deriveEditorFromId } from "Model/Editor";
-import DocEditor from "./DocumentEditor";
-import { Api, Point, Selection } from "Model/Slate";
 import { useState } from "react";
+
+import { IdProvider, deriveEditorFromId } from "Model/Editor";
+import { Api, showSelection, RangeRef, Selection } from "Model/Slate";
+import { makeRangeRef, updateRangeRef } from "Model/util";
+
 import { TextShape } from "Document/Text";
 import { Descendant } from "Document/hierarchy";
-import { Range, RangeRef } from "slate";
-import { makeRangeRef, updateRangeRef } from "Model/util";
+
+import DocEditor from "./DocumentEditor";
 
 
 export type EditorProps = {
     editorId: number,
 };
-
-function showPoint (point: Point) {
-    return `${point.path.join(".")}:${point.offset}`;
-}
-
-function showSelection (selection?: Range | null) {
-    if (!selection) return "none";
-    const anchor = showPoint(selection.anchor);
-    const focus = showPoint(selection.focus);
-
-    if (anchor == focus) return anchor;
-    else return `${anchor} -> ${focus}`;
-}
-
-
-
 
 
 export default function Editor ({editorId}: EditorProps) {

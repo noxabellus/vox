@@ -1,21 +1,14 @@
 import styled from "styled-components";
 
-import { Api, Selection, Slate } from "Model/Slate";
 import { HexRgba } from "Support/color";
-import { Vec2, toFixed } from "Support/math";
+import { Vec2, rangeCompare, rectsOverlap, vec2Compare } from "Support/math";
+
+import { Api, Selection, Slate } from "Model/Slate";
 
 
 function createRects (scrollRect: DOMRect, root: Element, domRange: Range): DOMRect[] {
     const rootRect = root.getBoundingClientRect();
     const rects: DOMRect[] = [];
-
-    function overlaps (rect: DOMRect, container: DOMRect) {
-        return rect.right > container.left
-            && rect.left < container.right
-            && rect.bottom > container.top
-            && rect.top < container.bottom
-            ;;
-    }
 
     function calculateBoundingRects (node: Node) {
         if (node.nodeType !== Node.TEXT_NODE) return;
@@ -34,7 +27,7 @@ function createRects (scrollRect: DOMRect, root: Element, domRange: Range): DOMR
         }
 
         for (const rect of range.getClientRects()) {
-            if (!overlaps(rect, scrollRect)) continue;
+            if (!rectsOverlap(rect, scrollRect)) continue;
 
             if (rect.width < minWidth) rect.width = minWidth;
 
@@ -100,26 +93,6 @@ function updateSelection (nodeRects: DOMRect[]) {
     return root;
 }
 
-function rangeCompare (a?: Range, b?: Range): boolean {
-    if (a === b) return true;
-
-    if (!a || !b) return false;
-
-    return a.compareBoundaryPoints(a.START_TO_START, b) === 0
-        && a.compareBoundaryPoints(a.END_TO_END, b) === 0
-        ;;
-}
-
-function vec2Compare (a?: Vec2, b?: Vec2): boolean {
-    if (a === b) return true;
-
-    if (!a || !b) return false;
-
-    return a[0] === b[0]
-        && a[1] === b[1]
-        ;;
-}
-
 export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba}>(({$focus, $textColor}) => ({
     style: {
         "--selection-opacity": $focus ? "0.4" : "0.2",
@@ -181,8 +154,6 @@ export type SelectionState = {
 export function selectionStep (state: SelectionState) {
     if (!state.root) return;
 
-    const start = performance.now();
-
     const domRange = (state.selected && Api.toDOMRange(state.slate, state.selected)) ?? undefined;
 
     const scrollNode = state.root.parentElement?.parentElement as Element;
@@ -217,8 +188,6 @@ export function selectionStep (state: SelectionState) {
         state.container.remove();
         delete state.container;
     }
-
-    console.log("selection step", toFixed(performance.now() - start));
 }
 
 export function selectionStop (state: SelectionState) {

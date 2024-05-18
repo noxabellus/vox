@@ -1,3 +1,5 @@
+import { DependencyList, useMemo } from "react";
+
 export type RAF<T> = {
     state: T,
     onStep: (state: T) => void,
@@ -11,11 +13,17 @@ type RAFData = {
 
 type RAFEntry<T> = RAF<T> & RAFData;
 
+export type RAFHandles<T> = [(update: (state: T) => void) => void, () => void];
+
 
 let RAF_ID = 0;
-const RAF_STORE = {} as Partial<Record<number, RAFEntry<unknown>>> ;
+const RAF_STORE = {} as Partial<Record<number, RAFEntry<unknown>>>;
 
-export default function RAF<T> (raf: RAF<T>): [(update: (state: T) => void) => void, () => void] {
+export function useRAF<T> (raf: RAF<T>, dependencies: DependencyList = []): RAFHandles<T> {
+    return useMemo(() => RAF(raf), dependencies);
+}
+
+export function RAF<T> (raf: RAF<T>): RAFHandles<T> {
     const id = RAF_ID++;
 
     RAF_STORE[id] = {
@@ -39,7 +47,6 @@ export default function RAF<T> (raf: RAF<T>): [(update: (state: T) => void) => v
             raf.stop = true;
             cancelAnimationFrame(raf.handle);
             setTimeout(() => {
-                console.log("RAF onStop");
                 raf.onStop(raf.state);
                 delete RAF_STORE[id];
             });

@@ -1,14 +1,23 @@
 import "Support/remote";
 
+import { FunctionComponent, ReactElement, useState } from "react";
 import { styled } from "styled-components";
 
+import { App as Model, reducer } from "Model/App";
+import { createEditor } from "Model/Editor";
+
+import { createDocument } from "Document";
 import { Descendant } from "Document/hierarchy";
 
-import { App as Model } from "Model/App";
 import Editor from "./modes/Editor";
-import { createEditor } from "Model/Editor";
-import { createDocument } from "Document";
-import { FunctionComponent, ReactElement, useState } from "react";
+
+import initialValue from "Model/lipsum.js";
+
+
+export type AppType
+    = FunctionComponent
+    & Model.Instance
+    ;
 
 
 const Body = styled.div`
@@ -25,22 +34,12 @@ const Body = styled.div`
     border-radius: 1em;
 `;
 
-import initialValue from "Model/lipsum.js";
-
-export type AppType
-    = FunctionComponent
-    & Model.Instance
-    ;
-
-
-
-
 
 function AppElement (): ReactElement {
     const [app, updateApp] = useState(App.model);
 
     async function appDispatch (action: Model.Action) {
-        App.model = await App.reducer(App.model, action);
+        App.model = await reducer(App.model, action);
         updateApp(App.model);
     }
 
@@ -50,6 +49,7 @@ function AppElement (): ReactElement {
         </Model.Provider>
     </Body>;
 }
+
 
 export const App: AppType = AppElement as any;
 
@@ -67,8 +67,6 @@ App.model = {
         keyBindings: {},
     },
 };
-
-App.reducer = Model.reducer;
 
 App.displayName = "App";
 

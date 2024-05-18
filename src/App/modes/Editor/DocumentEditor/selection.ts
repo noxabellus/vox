@@ -2,11 +2,20 @@ import styled from "styled-components";
 
 import { Api, Selection, Slate } from "Model/Slate";
 import { HexRgba } from "Support/color";
+import { Vec2, toFixed } from "Support/math";
 
 
-function createRects (root: Element, domRange: Range): DOMRect[] {
+function createRects (scrollRect: DOMRect, root: Element, domRange: Range): DOMRect[] {
     const rootRect = root.getBoundingClientRect();
     const rects: DOMRect[] = [];
+
+    function overlaps (rect: DOMRect, container: DOMRect) {
+        return rect.right > container.left
+            && rect.left < container.right
+            && rect.bottom > container.top
+            && rect.top < container.bottom
+            ;;
+    }
 
     function calculateBoundingRects (node: Node) {
         if (node.nodeType !== Node.TEXT_NODE) return;
@@ -25,6 +34,8 @@ function createRects (root: Element, domRange: Range): DOMRect[] {
         }
 
         for (const rect of range.getClientRects()) {
+            if (!overlaps(rect, scrollRect)) continue;
+
             if (rect.width < minWidth) rect.width = minWidth;
 
             rect.x -= rootRect.x;
@@ -99,6 +110,16 @@ function rangeCompare (a?: Range, b?: Range): boolean {
         ;;
 }
 
+function vec2Compare (a?: Vec2, b?: Vec2): boolean {
+    if (a === b) return true;
+
+    if (!a || !b) return false;
+
+    return a[0] === b[0]
+        && a[1] === b[1]
+        ;;
+}
+
 export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba}>(({$focus, $textColor}) => ({
     style: {
         "--selection-opacity": $focus ? "0.4" : "0.2",
@@ -154,19 +175,33 @@ export type SelectionState = {
     root?: HTMLDivElement,
     container?: HTMLDivElement,
     lastRange?: Range,
+    lastScroll?: Vec2,
 };
 
 export function selectionStep (state: SelectionState) {
     if (!state.root) return;
 
+    const start = performance.now();
+
     const domRange = (state.selected && Api.toDOMRange(state.slate, state.selected)) ?? undefined;
 
-    if (rangeCompare(domRange, state.lastRange)) return;
+    const scrollNode = state.root.parentElement?.parentElement as Element;
+    const screenRect = scrollNode.getBoundingClientRect() as DOMRect;
+
+    // draw a little extra to account for delay when scrolling rapidly
+    screenRect.x -= 100;
+    screenRect.y -= 100;
+    screenRect.width += 200;
+    screenRect.height += 200;
+
+    const scroll = [scrollNode.scrollLeft, scrollNode.scrollTop] as Vec2;
+    if (rangeCompare(domRange, state.lastRange) && vec2Compare(scroll, state.lastScroll)) return;
 
     state.lastRange = domRange;
+    state.lastScroll = scroll;
 
     if (domRange) {
-        const nodeRects = createRects(state.root, domRange);
+        const nodeRects = createRects(screenRect, state.root, domRange);
         const container = updateSelection(nodeRects);
 
         if (domRange.collapsed) container.className = "collapsed";
@@ -182,6 +217,8 @@ export function selectionStep (state: SelectionState) {
         state.container.remove();
         delete state.container;
     }
+
+    console.log("selection step", toFixed(performance.now() - start));
 }
 
 export function selectionStop (state: SelectionState) {

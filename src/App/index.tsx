@@ -25,7 +25,7 @@ const Body = styled.div`
     border-radius: 1em;
 `;
 
-import initialValue from "Model/minimal.js";
+import initialValue from "Model/lipsum.js";
 
 export type AppType
     = FunctionComponent

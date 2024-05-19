@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { IdProvider, deriveEditorFromId } from "Model/Editor";
-import { Api, showSelection, RangeRef, Selection } from "Model/Slate";
+import { Api, RangeRef, Selection } from "Model/Slate";
 import { makeRangeRef, updateRangeRef } from "Model/util";
 
 import { TextMarks } from "Document/Text";
@@ -9,6 +9,7 @@ import { Descendant } from "Document/hierarchy";
 
 import DocEditor from "./DocumentEditor";
 import styled from "styled-components";
+import ToolBar from "./Toolbar";
 
 
 export type EditorProps = {
@@ -30,14 +31,14 @@ const Body = styled.div.attrs<{$width: number}>(props => ({
 
 
 export default function Editor ({editorId}: EditorProps) {
-    const [editor, editorDispatch] = deriveEditorFromId(editorId);
+    const [editor, _editorDispatch] = deriveEditorFromId(editorId);
 
     const [textMarks, setTextMarks] = useState<Partial<TextMarks>>({});
-    const [lastSelection, setLastSelection] = useState<RangeRef | null>(null);
-    const [selection, setSelection] = useState<RangeRef | null>(makeRangeRef(editor.slate, editor.slate.selection));
-    const [focused, setFocused] = useState<boolean>(Api.isFocused(editor.slate));
+    const [_lastSelection, setLastSelection] = useState<RangeRef | null>(null);
+    const [selection, setSelection] = useState(makeRangeRef(editor.slate, editor.slate.selection));
+    const [focused, setFocused] = useState(Api.isFocused(editor.slate));
 
-    const selected = selection?.current || lastSelection?.current;
+    // const selected = selection?.current || lastSelection?.current;
 
     const valueHandler = (_document: Descendant[]) => {
         setTextMarks(Api.marks(editor.slate) || {});
@@ -67,74 +68,7 @@ export default function Editor ({editorId}: EditorProps) {
 
     return <IdProvider value={editorId}>
         <Body id={`editor-${editorId}`} $width={editor.width}>
-            <nav style={{display: "flex", flexDirection: "column", flexWrap: "wrap"}}>
-                <h1 style={{userSelect: "none", width: "100%"}}
-                    onMouseDown={e => e.preventDefault()} // prevent editor from losing focus
-                    onClick={() => editorDispatch({type: "set-title", value: "a new title"})}
-                >{editor.title}</h1>
-                <div style={{alignSelf: "center"}}>
-                    <button
-                        style={{cursor: "pointer", fontWeight: "bold", color: textMarks.bold ? "blue" : "gray"}}
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={async () =>
-                            editorDispatch({
-                                type: "slate-action",
-                                value: slate => {
-                                    if (!selected) return;
-
-                                    if (textMarks?.bold) {
-                                        Api.removeMark(slate, "bold");
-                                    } else {
-                                        Api.addMark(slate, "bold", true);
-                                    }
-                                },
-                            })
-                        }
-                    >B</button>
-
-                    <button
-                        style={{cursor: "pointer", fontStyle: "italic", color: textMarks.italic ? "blue" : "gray"}}
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={async () =>
-                            editorDispatch({
-                                type: "slate-action",
-                                value: slate => {
-                                    if (!selected) return;
-
-                                    if (textMarks?.italic) {
-                                        Api.removeMark(slate, "italic");
-                                    } else {
-                                        Api.addMark(slate, "italic", true);
-                                    }
-                                },
-                            })
-                        }
-                    >I</button>
-
-                    <button
-                        style={{cursor: "pointer", textDecoration: "underline", color: textMarks.underline ? "blue" : "gray"}}
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={async () =>
-                            editorDispatch({
-                                type: "slate-action",
-                                value: slate => {
-                                    if (!selected) return;
-
-                                    if (textMarks?.underline) {
-                                        Api.removeMark(slate, "underline");
-                                    } else {
-                                        Api.addMark(slate, "underline", true);
-                                    }
-                                },
-                            })
-                        }
-                    >U</button>
-                </div>
-                <span style={{alignSelf: "flex-end", fontFamily: "monospace"}}>Curr Selection:</span>
-                <span style={{alignSelf: "flex-end", fontFamily: "monospace"}}>{showSelection(selection?.current)}</span>
-                <span style={{alignSelf: "flex-end", fontFamily: "monospace"}}>Last Selection:</span>
-                <span style={{alignSelf: "flex-end", fontFamily: "monospace"}}>{showSelection(lastSelection?.current)}</span>
-            </nav>
+            <ToolBar id={`toolbar-${editorId}`} textMarks={textMarks} />
             <DocEditor
                 onBlur={blurHandler}
                 onFocus={focusHandler}

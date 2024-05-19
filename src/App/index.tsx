@@ -113,6 +113,7 @@ App.model = {
         autoSaveByDefault: false,
         keyBindings: {},
     },
+    lockIO: false,
 };
 
 App.displayName = "App";

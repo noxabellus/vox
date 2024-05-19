@@ -7,7 +7,7 @@
     "main": "dist/main.js",
     "scripts": {
         "dev": "webpack --watch",
-        "client": "electron ."
+        "client": "electron --trace-warnings ."
     },
     "devDependencies": {
         "@electron/remote": "^2.1.2",

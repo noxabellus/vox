@@ -1,6 +1,7 @@
 import RangeOf from "Support/RangeOf";
 import CSS from "Support/CSS";
 import { HexRgba } from "Support/color";
+import { Style } from "./Style";
 
 export * as Text from "./Text";
 
@@ -32,8 +33,19 @@ export type TextColor = {
 export type TextShapeType = keyof TextShape;
 export const TextShapeTypes = RangeOf<TextShapeType>()("bold", "italic", "underline");
 
+export const CSSShapeNames: {[K in TextShapeType]: keyof Style} = {
+    bold: "fontWeight",
+    italic: "fontStyle",
+    underline: "textDecoration",
+};
+
 export type TextColorType = keyof TextColor;
 export const TextColorTypes = RangeOf<TextColorType>()("foreground", "background");
+
+export const CSSColorNames: {[K in TextColorType]: keyof Style} = {
+    foreground: "color",
+    background: "backgroundColor",
+};
 
 
 

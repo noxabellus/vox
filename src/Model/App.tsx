@@ -13,6 +13,7 @@ export type App = {
     mode: Mode,
     editors: Editor[],
     userSettings: UserSettings,
+    lockIO: boolean,
 };
 
 export type ProviderProps = {
@@ -26,6 +27,7 @@ export type Dispatch = (action: Action) => Promise<void>;
 export type Action
     = EditorAction
     | SwitchMode
+    | SetLockIO
     ;
 
 export type EditorAction = {
@@ -41,9 +43,14 @@ export type SwitchMode = {
     value: Mode,
 };
 
+export type SetLockIO = {
+    type: "set-lock-io",
+    value: boolean,
+};
+
 
 export type ActionName = Action["type"];
-export const ActionNames = RangeOf<ActionName>()("editor-action", "switch-mode");
+export const ActionNames = RangeOf<ActionName>()("editor-action", "switch-mode", "set-lock-io");
 
 export function isAction (action: Action): action is Action {
     return ActionNames.includes(action.type as ActionName);
@@ -87,6 +94,10 @@ export async function reducer (state: App, action: Action): Promise<App> {
 
         case "switch-mode": {
             out.mode = action.value;
+        } break;
+
+        case "set-lock-io": {
+            out.lockIO = action.value;
         } break;
 
         default: panic("Invalid App Action", action);

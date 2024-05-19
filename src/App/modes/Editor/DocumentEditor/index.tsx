@@ -72,6 +72,7 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
         onStop: selectionStop,
     });
 
+
     useEffect(() => {
         if (root.current) {
             updateSelectRAF(state => { state.slate = editor.slate; state.root = root.current as HTMLDivElement; });

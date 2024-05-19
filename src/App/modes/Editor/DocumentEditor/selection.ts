@@ -98,7 +98,7 @@ export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba
         "--selection-opacity": $focus ? "0.4" : "0.2",
         "--caret-color": $textColor,
         "--animation-name": $focus ? "cursor-pulse" : "none",
-    } as any // style type doesn't recognize css variables
+    } as any
 }))`
     background: wheat;
     margin: 1em;
@@ -159,7 +159,6 @@ export function selectionStep (state: SelectionState) {
     const scrollNode = state.root.parentElement?.parentElement as Element;
     const screenRect = scrollNode.getBoundingClientRect() as DOMRect;
 
-    // draw a little extra to account for delay when scrolling rapidly
     screenRect.x -= 100;
     screenRect.y -= 100;
     screenRect.width += 200;

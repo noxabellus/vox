@@ -7,8 +7,7 @@ export * as Text from "./Text";
 
 export type Text
     = UnformattedText
-    & Partial<TextShape>
-    & Partial<TextColor>
+    & Partial<TextMarks>
     ;
 
 
@@ -16,6 +15,7 @@ export type UnformattedText = {
     text: string,
 };
 
+export type TextMarks = TextShape & TextColor;
 
 export type TextShape = {
     bold: boolean,

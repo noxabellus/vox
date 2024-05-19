@@ -10,6 +10,7 @@ const MemoElement = memo(elementRenderer, (prev, next) => prev.element === next.
 
 export function elementRenderer ({element, attributes, children}: RenderElementProps): ReactElement {
     console.info("rendering element");
+
     switch (element.type) {
         case "heading": {
             const Lvl = ["h1", "h2", "h3", "h4", "h5", "h6"][element.level - 1];

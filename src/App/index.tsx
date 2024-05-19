@@ -50,6 +50,7 @@ function AppElement (): ReactElement {
         updateApp(App.model);
     }
 
+
     useEffect(() => {
         let size = window.innerWidth;
 
@@ -74,6 +75,7 @@ function AppElement (): ReactElement {
             window.removeEventListener("resize", onResize);
         };
     }, [app]);
+
 
     return <Body>
         <Model.Provider app={app} dispatch={appDispatch}>

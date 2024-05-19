@@ -24,6 +24,7 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
 
     const ref = useRef<HTMLDivElement>(null);
 
+
     useEffect(() => {
         if (!ref.current) return;
 
@@ -72,7 +73,9 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
 
         if (dragging) {
             dragStart = ref.current.getBoundingClientRect().left;
+
             document.body.style.cursor = "col-resize";
+
             dragElem = document.createElement("div");
             dragElem.style.display = "flex";
             dragElem.style.alignItems = "center";
@@ -87,6 +90,7 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
             dragElem.style.borderRight = "2px solid #FF00FF";
             dragElem.style.zIndex = "1000";
             dragElem.style.pointerEvents = "none";
+
             const dragText = document.createElement("span");
             dragText.style.fontWeight = "bold";
             dragText.style.fontFamily = "monospace";
@@ -95,13 +99,16 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
             dragText.style.borderRadius = "1em";
             dragText.style.padding = "0.25em";
             dragElem.appendChild(dragText);
+
             document.body.prepend(dragElem);
+
             window.addEventListener("mouseup", onMouseup);
             window.addEventListener("mousemove", onMouseMove);
         } else endDragging();
 
         return endDragging;
     }, [dragging]);
+
 
     return <DividerStyles
         ref={ref}

@@ -6,7 +6,7 @@ import { Document } from "Document";
 import { Slate, createSlate } from "./Slate";
 import { App, useApp } from "./App";
 import RangeOf from "Support/RangeOf";
-import panic from "Support/panic";
+import { assert, unreachable } from "Support/panic";
 
 
 export * as Editor from "./Editor";
@@ -80,7 +80,7 @@ export const useId = () => useContext(IdCtx);
 export function deriveEditorFromIdAndApp (editorId: Editor.Id, app: App, appDispatch: App.Dispatch): readonly [Editor, Dispatch] {
     return useMemo(() => {
         const editor = app.editors.find(editor => editor.id === editorId);
-        if (!editor) panic("Editor not found in `deriveEditorFromId`", editorId);
+        assert(editor !== undefined, "Editor not found in `deriveEditorFromId`", editorId);
 
         return [editor, (editorAction: Action) => appDispatch({type: "editor-action", value: {editorId, editorAction}})];
     }, [editorId, app, appDispatch]);
@@ -123,7 +123,7 @@ export async function reducer (state: Editor, action: Action): Promise<Editor> {
             out.width = action.value;
         } break;
 
-        default: panic("Invalid Editor Action", action);
+        default: unreachable("Invalid Editor Action", action);
     }
 
     return out;

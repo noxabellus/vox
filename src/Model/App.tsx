@@ -3,7 +3,7 @@ import { Editor } from "./Editor";
 import { Mode } from "./Mode";
 import RangeOf from "Support/RangeOf";
 import { UserSettings } from "./UserSettings";
-import panic from "Support/panic";
+import { assert, unreachable } from "Support/panic";
 
 
 export * as App from "./App";
@@ -88,7 +88,7 @@ export async function reducer (state: App, action: Action): Promise<App> {
     switch (action.type) {
         case "editor-action": {
             const editorIndex = state.editors.findIndex(editor => editor.id === action.value.editorId);
-            if (editorIndex < 0) panic("Invalid Editor ID for Editor Action", action.value);
+            assert(editorIndex >= 0, "Invalid Editor ID for Editor Action", action.value);
             out.editors[editorIndex] = await Editor.reducer(out.editors[editorIndex], action.value.editorAction);
         } break;
 
@@ -100,7 +100,7 @@ export async function reducer (state: App, action: Action): Promise<App> {
             out.lockIO = action.value;
         } break;
 
-        default: panic("Invalid App Action", action);
+        default: unreachable("Invalid App Action", action);
     }
 
     return out;

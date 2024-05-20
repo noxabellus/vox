@@ -1,5 +1,5 @@
-
 import { Slate, Api, RangeRef, Selection } from "./Slate";
+
 
 export function makeRangeRef (editor: Slate, selection: Selection): RangeRef | null {
     return selection? Api.rangeRef(editor, selection) : null;

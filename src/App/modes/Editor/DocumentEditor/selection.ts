@@ -66,7 +66,13 @@ function createRects (scrollRect: DOMRect, root: Element, domRange: Range): DOMR
         }
     }
 
+    // eliminate a bug where the selection doubles up on end of paragraphs
     if (rects.length > 1 && rects[rects.length - 1].width < 2) {
+        rects.pop();
+    }
+
+    // eliminate a bug where the selection doubles up on word wraps
+    if (domRange.collapsed && rects.length === 2) {
         rects.pop();
     }
 

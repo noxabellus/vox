@@ -10,15 +10,17 @@ import PropsOf from "Support/PropsOf";
 export type ToolBarProps = LocalToolBarProps & PropsOf<typeof ToolSet>;
 
 type LocalToolBarProps = {
+    disabled: boolean,
     textMarks: Partial<TextMarks>,
 };
 
 
-export default function ToolBar ({textMarks, ...props}: ToolBarProps) {
+export default function ToolBar ({disabled, textMarks, children, ...props}: ToolBarProps) {
     const [editor, editorDispatch] = useEditor();
 
     const ShapeButton = ({type}: {type: TextShapeType}) =>
         <Button.Serif
+            disabled={disabled}
             style={{[CSSShapeNames[type]]: type}}
             className={textMarks[type] ? "selected" : ""}
             onClick={async () =>
@@ -46,5 +48,6 @@ export default function ToolBar ({textMarks, ...props}: ToolBarProps) {
         <ShapeButton type="italic" />
         <ShapeButton type="underline" />
         <Spacer />
+        {children}
     </ToolSet>;
 }

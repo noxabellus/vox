@@ -1,12 +1,13 @@
-import { ButtonHTMLAttributes, DetailedHTMLProps, forwardRef } from "react";
+import { ForwardedRef, forwardRef } from "react";
 import styled from "styled-components";
 
 import { useApp } from "Model/App";
 
 import Svg from "./Svg";
+import PropsOf from "Support/PropsOf";
 
 
-export type ButtonProps = DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>;
+export type ButtonProps = PropsOf<typeof ButtonBase>;
 
 
 export type Button = {
@@ -88,7 +89,7 @@ const InlineSvg = styled.button`
 `;
 
 
-export const Plain = forwardRef(({children, disabled, ...props}: ButtonProps, ref: any) => {
+export const Plain = forwardRef(({children, disabled, ...props}: ButtonProps, ref: ForwardedRef<HTMLButtonElement>) => {
     const [app] = useApp();
     return <ButtonBase ref={ref} onMouseDown={e => e.preventDefault()} disabled={disabled || app.lockIO} {...props}>{children}</ButtonBase>;
 });

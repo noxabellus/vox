@@ -21,10 +21,11 @@
 
 
 html, body, #app-container {
-    display: flex;
     width: 100vw;
     height: 100vh;
+    display: flex;
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
+    overflow: hidden;
 }

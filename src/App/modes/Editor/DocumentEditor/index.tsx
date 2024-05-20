@@ -28,10 +28,8 @@ export type DocumentEditorProps = {
 
 const CustomScrollRegion = styled(ScrollRegion)`
     border: 1px solid rgb(var(--accent-color));
-    border-radius: var(--minor-border-radius);
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
     border-top: none;
+    border-bottom: none;
 `;
 
 
@@ -99,19 +97,22 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
     }, [selected]);
 
 
-    return <Slate.Context
-        slate={editor.slate}
+    return <CustomScrollRegion>
+        <TextStyles ref={root} $focus={focused} $textColor={textColor}>
+            <Slate.Context
+                slate={editor.slate}
 
-        onChange={value => onChange?.(value)}
-        onSelectionChange={newSelection => {
-            setLastSelection(updateRangeRef(selection));
-            setSelection(makeRangeRef(editor.slate, newSelection));
-            onSelectionChange?.(newSelection);
-        }}
-        onValueChange={value => onValueChange?.(value)}
-    >
-        <CustomScrollRegion>
-            <TextStyles ref={root} $focus={focused} $textColor={textColor}>
+                onChange={value => {
+                    setSelection(makeRangeRef(editor.slate, editor.slate.selection));
+                    onChange?.(value);
+                }}
+                onSelectionChange={newSelection => {
+                    setLastSelection(updateRangeRef(selection));
+                    setSelection(makeRangeRef(editor.slate, newSelection));
+                    onSelectionChange?.(newSelection);
+                }}
+                onValueChange={value => onValueChange?.(value)}
+            >
                 <StyledEditable
                     onBlur={_ => {
                         if (document.hasFocus()) {
@@ -147,7 +148,7 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
 
                     disableDefaultStyles={false}
                 />
-            </TextStyles>
-        </CustomScrollRegion>
-    </Slate.Context>;
+            </Slate.Context>
+        </TextStyles>
+    </CustomScrollRegion>;
 }

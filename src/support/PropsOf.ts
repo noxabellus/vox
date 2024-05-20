@@ -24,7 +24,7 @@ type PropsOfFC<C extends PropQueryTable["FC"]> = {
 type PropsOfF<C extends PropQueryTable["F"]> = Parameters<C>[0]
 type PropsOfC<C extends PropQueryTable["C"]> = C extends Component<infer P> ? P : never;
 type PropsOfCC<C extends PropQueryTable["CC"]> = C extends ComponentClass<infer P> ? P : never;
-type PropsOfH1<C extends PropQueryTable["H1"]> = C extends ReactHTMLElement<infer H> ? HTMLProps<H> : never;
+type PropsOfH1<C extends PropQueryTable["H1"]> = C extends ReactHTMLElement<infer P> ? HTMLProps<P> : never;
 type PropsOfH2<C extends PropQueryTable["H2"]> = C extends HTMLElement ? HTMLProps<C> : never;
 
 export type PropQueryable = ValueOf<PropQueryTable>;

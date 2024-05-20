@@ -16,7 +16,7 @@ import Editor from "./modes/Editor";
 
 const docs = [
     createDocument("untitled 1", {}, (await import("Model/initialValue/lipsum")).default),
-    // createDocument("untitled 2", {}, (await import("Model/initialValue/minimal")).default),
+    createDocument("untitled 2", {}, (await import("Model/initialValue/minimal")).default),
 ];
 
 

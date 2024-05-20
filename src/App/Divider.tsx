@@ -37,9 +37,10 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
 
             const offset = e.clientX;
 
-            diff = offset - dragStart;
+            diff = Math.round(offset - dragStart);
 
             if (offset < dragStart) {
+                diff -= 2; // account for width of divider
                 dragElem.style.left = `${offset}px`;
                 dragElem.style.width = `${dragStart - offset}px`;
                 dragElem.firstChild.innerHTML = `${diff}px`;

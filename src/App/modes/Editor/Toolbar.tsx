@@ -1,6 +1,7 @@
 import { CSSShapeNames, TextMarks, TextShapeType } from "Document/Text";
 import Spacer from "Elements/Spacer";
 import ToolSet from "Elements/ToolSet";
+import Button from "Elements/Button";
 import { useEditor } from "Model/Editor";
 import { Api } from "Model/Slate";
 import PropsOf from "Support/PropsOf";
@@ -17,9 +18,9 @@ export default function ToolBar ({textMarks, ...props}: ToolBarProps) {
     const [editor, editorDispatch] = useEditor();
 
     const ShapeButton = ({type}: {type: TextShapeType}) =>
-        <button
-            style={{cursor: "pointer", [CSSShapeNames[type]]: type, color: textMarks[type] ? "blue" : "gray"}}
-            onMouseDown={e => e.preventDefault()}
+        <Button.Serif
+            style={{[CSSShapeNames[type]]: type}}
+            className={textMarks[type] ? "selected" : ""}
             onClick={async () =>
                 editorDispatch({
                     type: "slate-action",
@@ -32,10 +33,10 @@ export default function ToolBar ({textMarks, ...props}: ToolBarProps) {
                     },
                 })
             }
-        >{type.slice(0, 1).toUpperCase()}</button>;
+        >{type.slice(0, 1).toUpperCase()}</Button.Serif>;
 
 
-    return <ToolSet {...props}>
+    return <ToolSet style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}} {...props}>
         <h1 style={{userSelect: "none"}}
             onMouseDown={e => e.preventDefault()} // prevent editor from losing focus
             onClick={() => editorDispatch({type: "set-title", value: "a new title"})}

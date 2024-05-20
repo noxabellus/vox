@@ -1,8 +1,8 @@
-import PropsOf, { PropQueryable } from "Support/PropsOf";
-import { PropsWithChildren, ReactHTMLElement } from "react";
+import styled from "styled-components";
 import { Scrollbar } from "react-scrollbars-custom";
 import { ElementPropsWithElementRef } from "react-scrollbars-custom/dist/types/types";
-import styled from "styled-components";
+
+import PropsOf, { PropQueryable } from "Support/PropsOf";
 
 
 const ScrollStyles = styled(Scrollbar)`
@@ -21,40 +21,39 @@ const ScrollStyles = styled(Scrollbar)`
         display: flex;
         min-width: max-content;
         flex-grow: 1;
-        background: blue;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
     }
 
     & .ScrollbarsCustom-Track {
-        opacity: 0.4;
         position: absolute;
         overflow: hidden;
-        border-radius: 5px;
-        background: grey;
-        border: 1px solid white;
         user-select: none;
+        border-radius: var(--minor-border-radius);
+        background: rgb(var(--element-color));
+        border: 1px solid rgb(var(--accent-color));
+        opacity: var(--scrollbar-opacity);
     }
 
     & .ScrollbarsCustom-TrackY {
-        width: 10px;
-        height: calc(100% - 60px);
-        top: 30px;
-        right: 10px;
+        width: var(--scrollbar-width);
+        height: calc(100% - var(--gap) * 4);
+        top: calc(var(--gap) * 2);
+        right: calc(var(--gap) * 2);
     }
 
     & .ScrollbarsCustom-TrackX {
-        height: 10px;
-        width: calc(100% - 60px);
-        bottom: 10px;
-        left: 30px;
+        height: var(--scrollbar-width);
+        width: calc(100% - (var(--scrollbar-width) + var(--gap) * 6));
+        left: calc(var(--gap) * 2);
+        bottom: calc(var(--gap) * 2);
     }
 
     & .ScrollbarsCustom-Thumb {
-        border-radius: 5px;
-        background: #c700c7;
-        border: 1px solid white;
+        border-radius: var(--minor-border-radius);
+        background: rgba(var(--accent-color), 0.3);
+        border: 1px solid rgb(var(--accent-color));
     }
 
     & .ScrollbarsCustom-ThumbY {
@@ -70,22 +69,23 @@ const ScrollStyles = styled(Scrollbar)`
     }
 `;
 
-export type ScrollRegionProps<C extends PropQueryable> = LocalScrollRegionProps<C> & Omit<PropsWithChildren<PropsOf<C>>, "key">;
+export type ScrollRegionProps<C> = LocalScrollRegionProps<C> & PropsOf<typeof ScrollStyles>;
 
-type LocalScrollRegionProps<C extends PropQueryable> = {
+type LocalScrollRegionProps<C> = {
     contentNode?: C
 };
 
 
-export default function ScrollRegion<C extends PropQueryable = ReactHTMLElement<HTMLDivElement>> ({children, contentNode, style, ...props}: ScrollRegionProps<C>) {
+export default function ScrollRegion<C extends PropQueryable = HTMLDivElement> ({children, contentNode, ...props}: ScrollRegionProps<C>) {
     const ContentNode = (contentNode || "div") as any;
 
     return <ScrollStyles
         disableTracksWidthCompensation={true}
         noDefaultStyles={true}
-        contentProps={{renderer: ({key, elementRef, style: style2, ...props2}: ElementPropsWithElementRef<PropsOf<C>>) => {
-            return <ContentNode key={key} ref={elementRef} {...{...{...props, ...props2, style: {...style, ...style2}}}} />;
+        contentProps={{renderer: ({key, elementRef, ...props2}: ElementPropsWithElementRef<PropsOf<C>>) => {
+            return <ContentNode key={key} ref={elementRef} {...props2} />;
         }}}
+        {...props}
     >
         {children}
     </ScrollStyles>;

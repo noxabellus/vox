@@ -107,7 +107,6 @@ export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba
         position: relative;
         height: 0;
         overflow: show;
-        z-index: 100;
     }
 
     & .textSelection {

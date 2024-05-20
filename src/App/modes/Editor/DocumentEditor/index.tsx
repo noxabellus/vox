@@ -26,6 +26,15 @@ export type DocumentEditorProps = {
 } & Slate.ContextCallbacks;
 
 
+const CustomScrollRegion = styled(ScrollRegion)`
+    border: 1px solid rgb(var(--accent-color));
+    border-radius: var(--minor-border-radius);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none;
+`;
+
+
 const StyledEditable = styled(Editable)`
     padding: 1em;
 
@@ -101,7 +110,7 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
         }}
         onValueChange={value => onValueChange?.(value)}
     >
-        <ScrollRegion>
+        <CustomScrollRegion>
             <TextStyles ref={root} $focus={focused} $textColor={textColor}>
                 <StyledEditable
                     onBlur={_ => {
@@ -139,6 +148,6 @@ export default function DocumentEditor ({style, placeholder, onBlur, onFocus, on
                     disableDefaultStyles={false}
                 />
             </TextStyles>
-        </ScrollRegion>
+        </CustomScrollRegion>
     </Slate.Context>;
 }

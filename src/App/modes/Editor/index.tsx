@@ -27,6 +27,8 @@ const Body = styled.div.attrs<{$width: number}>(props => ({
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
+    background-color: rgb(var(--background-color));
+    border-radius: var(--minor-border-radius);
 `;
 
 

@@ -71,3 +71,8 @@ export function vec4Compare (a?: Vec4, b?: Vec4): boolean {
         && a[3] === b[3]
         ;;
 }
+
+
+export function clamp (value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}

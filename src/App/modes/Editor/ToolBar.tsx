@@ -1,10 +1,16 @@
+import PropsOf from "Support/PropsOf";
+
 import { CSSShapeNames, TextMarks, TextShapeType } from "Document/Text";
+
+import { useApp } from "Model/App";
+import { deriveEditorFromApp } from "Model/Editor";
+import { Api } from "Model/Slate";
+
 import Spacer from "Elements/Spacer";
 import ToolSet from "Elements/ToolSet";
 import Button from "Elements/Button";
-import { useEditor } from "Model/Editor";
-import { Api } from "Model/Slate";
-import PropsOf from "Support/PropsOf";
+
+import closeImg from "Assets/xmark.svg?raw";
 
 
 export type ToolBarProps = LocalToolBarProps & PropsOf<typeof ToolSet>;
@@ -16,7 +22,9 @@ type LocalToolBarProps = {
 
 
 export default function ToolBar ({disabled, textMarks, children, ...props}: ToolBarProps) {
-    const [editor, editorDispatch] = useEditor();
+    const [app, appDispatch] = useApp();
+    const [editor, editorDispatch] = deriveEditorFromApp(app, appDispatch);
+
 
     const ShapeButton = ({type}: {type: TextShapeType}) =>
         <Button.Serif
@@ -49,5 +57,7 @@ export default function ToolBar ({disabled, textMarks, children, ...props}: Tool
         <ShapeButton type="underline" />
         <Spacer />
         {children}
+        <Spacer/>
+        <Button.InlineIcon svg={closeImg} onClick={() => appDispatch({type: "close", value: editor.id})} />
     </ToolSet>;
 }

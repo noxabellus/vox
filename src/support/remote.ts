@@ -9,6 +9,8 @@ export const terminal: Console = (remote.app as any).console;
 
 export const hooks: {onClose: OnCloseCallback} = (remote.app as any).hooks;
 
+export const window = remote.getCurrentWindow();
+
 export * from "@electron/remote";
 
 

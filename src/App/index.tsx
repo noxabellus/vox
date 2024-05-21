@@ -1,17 +1,16 @@
-import "Support/remote";
+import { FunctionComponent, ReactElement, useState } from "react";
 
-import { FunctionComponent, ReactElement, useEffect, useState } from "react";
-import { styled } from "styled-components";
-
-import { App as Model, reducer } from "Model/App";
-import { Editor as EditorModel, createEditor } from "Model/Editor";
+import * as remote from "Support/remote";
+import { unreachable } from "Support/panic";
 
 import { createDocument } from "Document";
 
-import Divider from "./Divider";
+import { App as Model, reducer } from "Model/App";
+import { createEditor } from "Model/Editor";
 
 import Editor from "./modes/Editor";
-
+import Splash from "./modes/Splash";
+import MultiEditor from "./modes/MultiEditor";
 
 
 const docs = [
@@ -26,22 +25,6 @@ export type App
     ;
 
 
-const Body = styled.div`
-    flex-grow: 1;
-    max-height: 100vh;
-    display: flex;
-    flex-direction: row;
-    justify-content: stretch;
-    align-items: stretch;
-
-    font-family: Roboto;
-    background-color: #f0f0f0;
-    color: #202020;
-    border-radius: 1em;
-`;
-
-
-
 function AppElement (): ReactElement {
     const [app, updateApp] = useState(App.model);
 
@@ -51,60 +34,54 @@ function AppElement (): ReactElement {
     }
 
 
-    useEffect(() => {
-        let size = window.innerWidth;
+    let mode;
 
-        const onResize = async () => {
-            const newSize = window.innerWidth;
-            const oldSize = size;
+    switch (app.mode.name) {
+        case "splash": {
+            remote.window.setMinimumSize(440, 400);
+            remote.window.setSize(440, 400, false);
+            remote.window.setResizable(false);
+            mode = <Splash />;
+        } break;
 
-            size = newSize;
+        case "editor": {
+            remote.window.setMinimumSize(800, 600);
+            remote.window.setSize(800, 600, true);
+            remote.window.setResizable(true);
+            mode = <Editor editorId={app.mode.editorId} />;
+        } break;
 
-            app.editors.forEach((editor: EditorModel) => appDispatch({
-                type: "editor-action",
-                value: {
-                    editorId: editor.id,
-                    editorAction: {type: "resize", value: newSize * (editor.width / oldSize)},
-                },
-            }));
-        };
+        case "multi-editor": {
+            remote.window.setMinimumSize(800, 600);
+            remote.window.setSize(800, 600, true);
+            remote.window.setResizable(true);
+            mode = <MultiEditor editorIds={app.mode.editorIds} />;
+        } break;
 
-        window.addEventListener("resize", onResize);
+        case "user-settings": {
+            remote.window.setMinimumSize(800, 600);
+            remote.window.setSize(800, 600, true);
+            remote.window.setResizable(true);
+            unreachable("User Settings Mode not implemented");
+        } break;
 
-        return () => {
-            window.removeEventListener("resize", onResize);
-        };
-    }, [app]);
+        default: unreachable("Invalid App Mode", app.mode);
+    }
 
 
-    return <Body>
-        <Model.Provider app={app} dispatch={appDispatch}>
-            {app.editors.flatMap((editor, index) => {
-                const elems = [<Editor key={editor.id} editorId={editor.id} />];
-
-                if (index < app.editors.length - 1) {
-                    elems.push(<Divider
-                        key={`divider-${index}`}
-                        leftEditorId={editor.id}
-                        rightEditorId={app.editors[index + 1].id}
-                    />);
-                }
-
-                return elems;
-            })}
-        </Model.Provider>
-    </Body>;
+    return <Model.Provider app={app} dispatch={appDispatch}>
+        {mode}
+    </Model.Provider>;
 }
 
 
 export const App: App = AppElement as any;
 
 App.model = {
-    mode: { name: "editor", editorId: 0 },
+    mode: { name: "splash" },
     editors: docs.map((doc, index) =>
         createEditor(
             index,
-            window.innerWidth / docs.length,
             undefined,
             doc,
         )

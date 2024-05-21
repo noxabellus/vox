@@ -8,6 +8,7 @@ export * as Mode from "./Mode";
 export type Mode
     = SplashMode
     | EditorMode
+    | MultiEditorMode
     | UserSettingsMode
     ;
 
@@ -20,22 +21,20 @@ export type EditorMode = {
     editorId: Editor.Id
 };
 
+export type MultiEditorMode = {
+    name: "multi-editor",
+    editorIds: Editor.Id[],
+};
+
 export type UserSettingsMode = {
-    name: "userSettings",
+    name: "user-settings",
     lastMode: Mode,
 };
 
 export type ModeName = Mode["name"];
+export const ModeNames = RangeOf<ModeName>()("splash", "editor", "multi-editor", "user-settings");
 
-type Modes = { [K in ModeName]: Mode };
-class ModeTypes implements Modes {
-    splash: SplashMode;
-    editor: EditorMode;
-    userSettings: UserSettingsMode;
-};
-
-
-export const ModeNames = RangeOf<ModeName>()("splash", "editor", "userSettings");
+export type ModeTypes = { [K in ModeName]: Extract<Mode, {name: K}> };
 
 
 export function isMode (mode: Mode): mode is Mode {
@@ -50,8 +49,12 @@ export function isEditorMode (mode: Mode): mode is EditorMode {
     return mode.name === "editor";
 }
 
+export function isMultiEditorMode (mode: Mode): mode is MultiEditorMode {
+    return mode.name === "multi-editor";
+}
+
 export function isUserSettingsMode (mode: Mode): mode is UserSettingsMode {
-    return mode.name === "userSettings";
+    return mode.name === "user-settings";
 }
 
 export function asMode (mode: Mode): Mode | undefined {
@@ -66,10 +69,18 @@ export function asEditorMode (mode: Mode): EditorMode | undefined {
     if (isEditorMode(mode)) return mode;
 }
 
+export function asMultiEditorMode (mode: Mode): MultiEditorMode | undefined {
+    if (isMultiEditorMode(mode)) return mode;
+}
+
 export function asUserSettingsMode (mode: Mode): UserSettingsMode | undefined {
     if (isUserSettingsMode(mode)) return mode;
 }
 
 export function isSpecifiedMode (mode: Mode, modeName: ModeName): mode is ModeTypes[typeof modeName] {
     return mode.name === modeName;
+}
+
+export function asSpecifiedMode (mode: Mode, modeName: ModeName): ModeTypes[typeof modeName] | undefined {
+    if (isSpecifiedMode(mode, modeName)) return mode;
 }

@@ -4,12 +4,12 @@ import styled from "styled-components";
 import { useRAF } from "Support/RAF";
 import { HexRgba } from "Support/color";
 
-import ScrollRegion from "Elements/ScrollRegion";
-
 import { Api, RangeRef, Selection, Slate, Editable } from "Model/Slate";
 import { App, useApp } from "Model/App";
 import { deriveEditorFromApp } from "Model/Editor";
 import { makeRangeRef, updateRangeRef } from "Model/util";
+
+import ScrollRegion from "Elements/ScrollRegion";
 
 import leafRenderer from "./renderers/leaf";
 import elementRenderer from "./renderers/element";
@@ -30,6 +30,7 @@ const CustomScrollRegion = styled(ScrollRegion)`
     border: 1px solid rgb(var(--accent-color));
     border-top: none;
     border-bottom: none;
+    background: rgb(var(--background-color));
 `;
 
 

@@ -18,23 +18,19 @@ export type EditorProps = {
 };
 
 
-const Body = styled.div.attrs<{$width: number}>(props => ({
-    style: {
-        width: `${props.$width}px`
-    }
+const Body = styled.div.attrs<{$width?: number}>(({$width}) => ({
+    style: $width? { width: `${$width}px` } : {}
 }))`
-    max-height: 100vh;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
-    background-color: rgb(var(--background-color));
-    border-radius: var(--minor-border-radius);
 `;
 
 
 export default function Editor ({editorId}: EditorProps) {
-    const [editor, _editorDispatch] = deriveEditorFromId(editorId);
+    const [editor] = deriveEditorFromId(editorId);
 
     const [textMarks, setTextMarks] = useState<Partial<TextMarks>>({});
     const [lastSelection, setLastSelection] = useState<RangeRef | null>(null);

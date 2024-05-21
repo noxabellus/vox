@@ -27,5 +27,6 @@ html, body, #app-container {
     flex-direction: column;
     justify-content: stretch;
     align-items: stretch;
-    overflow: hidden;
+    overflow: scroll;
+    scrollbar-width: none;
 }

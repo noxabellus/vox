@@ -11,7 +11,7 @@ export default function leafRendererMemo (props: RenderLeafProps): ReactElement 
 const MemoLeaf = memo(leafRenderer, (prev, next) => prev.leaf === next.leaf);
 
 export function leafRenderer ({leaf, attributes, children}: RenderLeafProps): ReactElement {
-    console.info("rendering leaf");
+    // console.info("rendering leaf");
 
     const style = {};
 

@@ -32,6 +32,15 @@ export default [
                     "varsIgnorePattern": "^_"
                 }
             ],
+            "@typescript-eslint/ban-types": [
+                "error",
+                {
+                    "types": {
+                        "{}": false,
+                    },
+                    "extendDefaults": true,
+                },
+            ],
             "semi": "error",
         }
     }

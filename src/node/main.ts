@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, globalShortcut } from "electron";
+import { app, BrowserWindow, Menu, globalShortcut, shell } from "electron";
 import * as remoteMain from "@electron/remote/main";
 
 import path from "path";
@@ -67,6 +67,10 @@ win.loadFile(path.join(clientDir, "index.html"));
 win.webContents.session.setSpellCheckerEnabled(false);
 // win.setFullScreen(true);
 // win.webContents.openDevTools();
+win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
 
 globalShortcut.register("CommandOrControl+Shift+I", () => {
     if (win.webContents.isDevToolsOpened()) {

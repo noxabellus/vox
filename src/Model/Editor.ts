@@ -12,6 +12,9 @@ import { assert, unreachable } from "Support/panic";
 export * as Editor from "./Editor";
 
 
+export const MIN_WIDTH = 100;
+
+
 export type Id = number;
 
 export type Editor = {
@@ -19,7 +22,7 @@ export type Editor = {
     slate: Slate,
     filePath?: PathLike,
     title: string,
-    width: number,
+    width?: number,
 };
 
 export type Dispatch = (action: Action) => Promise<void>;
@@ -51,6 +54,7 @@ export type Resize = {
     value: number,
 };
 
+
 export type ActionName = Action["type"];
 export const ActionNames = RangeOf<ActionName>()("set-title", "set-file-path", "slate-action", "resize");
 
@@ -59,10 +63,9 @@ export function isAction (action: Action): action is Action {
 }
 
 
-export function createEditor (id: number, width: number, filePath?: PathLike, document?: Document): Editor {
+export function createEditor (id: number, filePath?: PathLike, document?: Document): Editor {
     return {
         id,
-        width,
         filePath,
         title: document?.title || "untitled",
         slate: createSlate(document),
@@ -120,7 +123,7 @@ export async function reducer (state: Editor, action: Action): Promise<Editor> {
         } break;
 
         case "resize": {
-            out.width = action.value;
+            out.width = Math.max(MIN_WIDTH, action.value);
         } break;
 
         default: unreachable("Invalid Editor Action", action);

@@ -9,7 +9,7 @@ export default function elementRendererMemo (props: RenderElementProps): ReactEl
 const MemoElement = memo(elementRenderer, (prev, next) => prev.element === next.element);
 
 export function elementRenderer ({element, attributes, children}: RenderElementProps): ReactElement {
-    console.info("rendering element");
+    // console.info("rendering element");
 
     switch (element.type) {
         case "heading": {

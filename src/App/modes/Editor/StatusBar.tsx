@@ -2,11 +2,11 @@ import styled from "styled-components";
 
 import PropsOf from "Support/PropsOf";
 
-import ToolSet from "Elements/ToolSet";
-
 import { showSelection, Selection, Api } from "Model/Slate";
 import { useEditor } from "Model/Editor";
 import { fragmentWords } from "Document/util";
+
+import ToolSet from "Elements/ToolSet";
 
 
 export type StatusBarProps = LocalStatusBarProps & PropsOf<typeof CustomToolSet>;

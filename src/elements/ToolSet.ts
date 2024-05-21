@@ -13,4 +13,7 @@ export default styled.nav`
     padding: var(--gap);
     border-radius: var(--minor-border-radius);
     user-select: none;
+
+    overflow: scroll;
+    scrollbar-width: none;
 `;

@@ -82,6 +82,12 @@ const ButtonBase = styled.button`
 const InlineSvg = styled.button`
     cursor: pointer;
 
+    outline-color: rgb(var(--accent-color));
+    border-color: rgb(var(--accent-color));
+    color: rgb(var(--accent-color));
+    stroke: rgb(var(--accent-color));
+    fill: rgb(var(--accent-color));
+
     &:disabled {
         cursor: not-allowed;
         opacity: 0.5;

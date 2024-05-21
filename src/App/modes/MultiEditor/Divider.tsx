@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
-import { deriveEditorFromId } from "Model/Editor";
+import { clamp } from "Support/math";
+
+import { MIN_WIDTH, deriveEditorFromId } from "Model/Editor";
 
 
 export type EditorDividerProps = {
@@ -12,8 +14,10 @@ export type EditorDividerProps = {
 const DividerStyles = styled.div`
     cursor: col-resize;
     user-select: none;
-    width: 3px;
-    background-color: #FF00FF;
+    width: 2px;
+    flex-shrink: 0;
+    background-color: rgb(var(--accent-color));
+    margin: 0 5px;
 `;
 
 
@@ -35,23 +39,35 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
         const onMouseMove = (e: MouseEvent) => {
             if (!(dragElem.firstChild instanceof HTMLSpanElement)) return;
 
-            const offset = e.clientX;
+            const offset = clamp(e.clientX, 0, window.innerWidth);
 
             diff = Math.round(offset - dragStart);
+            diff = clamp(diff, -(leftEditor.width as number - MIN_WIDTH - 1), rightEditor.width as number - MIN_WIDTH);
 
             if (offset < dragStart) {
-                diff -= 2; // account for width of divider
-                dragElem.style.left = `${offset}px`;
-                dragElem.style.width = `${dragStart - offset}px`;
+                diff -= 1; // account for width of divider
+
+                dragElem.style.left = `${dragStart + diff}px`;
+                dragElem.style.width = `${+diff}px`;
                 dragElem.firstChild.innerHTML = `${diff}px`;
+
+                dragElem.style.borderLeft = "2px solid rgb(var(--accent-color))";
+                dragElem.style.borderRight = "none";
             } else if (offset > dragStart) {
                 dragElem.style.left = `${dragStart + 3}px`;
-                dragElem.style.width = `${offset - dragStart - 3}px`;
+                dragElem.style.width = `${diff - 3}px`;
                 dragElem.firstChild.innerHTML = `+${diff}px`;
+
+                dragElem.style.borderLeft = "none";
+                dragElem.style.borderRight = "2px solid rgb(var(--accent-color))";
             } else {
                 dragElem.style.left = `${dragStart}px`;
                 dragElem.style.width = "3px";
                 dragElem.firstChild.innerHTML = "";
+
+                dragElem.style.borderLeft = "none";
+                dragElem.style.borderRight = "none";
+
                 diff = null;
             }
         };
@@ -67,13 +83,15 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
             window.removeEventListener("mouseup", onMouseup);
 
             if (diff) {
-                leftDispatch({type: "resize", value:  leftEditor.width + diff});
-                rightDispatch({type: "resize", value: rightEditor.width - diff});
+                 leftDispatch({type: "resize", value:  leftEditor.width as number + diff});
+                rightDispatch({type: "resize", value: rightEditor.width as number - diff});
+                diff = null;
             }
         };
 
         if (dragging) {
-            dragStart = ref.current.getBoundingClientRect().left;
+            const rect = ref.current.getBoundingClientRect();
+            dragStart = rect.left;
 
             document.body.style.cursor = "col-resize";
 
@@ -82,13 +100,11 @@ export default function Divider ({leftEditorId, rightEditorId}: EditorDividerPro
             dragElem.style.alignItems = "center";
             dragElem.style.justifyContent = "center";
             dragElem.style.position = "absolute";
-            dragElem.style.top = "0";
+            dragElem.style.bottom = "0";
             dragElem.style.left = `${dragStart}px`;
             dragElem.style.right = `${dragStart}px`;
-            dragElem.style.height = "100%";
+            dragElem.style.height = `${rect.height}px`;
             dragElem.style.backgroundColor = "rgb(66, 66, 66, 0.6)";
-            dragElem.style.borderLeft = "2px solid #FF00FF";
-            dragElem.style.borderRight = "2px solid #FF00FF";
             dragElem.style.zIndex = "1000";
             dragElem.style.pointerEvents = "none";
 

@@ -11,6 +11,7 @@ import { Descendant } from "Document/hierarchy";
 import DocEditor from "./DocumentEditor";
 import ToolBar from "./ToolBar";
 import StatusBar from "./StatusBar";
+import { useWindow } from "Model/WindowInfo";
 
 
 export type EditorProps = {
@@ -30,6 +31,7 @@ const Body = styled.div.attrs<{$width?: number}>(({$width}) => ({
 
 
 export default function Editor ({editorId}: EditorProps) {
+    const [_, windowDispatch] = useWindow();
     const [editor] = deriveEditorFromId(editorId);
 
     const [textMarks, setTextMarks] = useState<Partial<TextMarks>>({});
@@ -37,7 +39,8 @@ export default function Editor ({editorId}: EditorProps) {
     const [selection, setSelection] = useState(makeRangeRef(editor.slate, editor.slate.selection));
     const [focused, setFocused] = useState(Api.isFocused(editor.slate));
 
-    // remote.setWindowSizeMemo(800, 600);
+    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
+    windowDispatch({type: "set-window-mode", value: "edit"});
 
     const valueHandler = (_document: Descendant[]) => {
         setTextMarks(Api.marks(editor.slate) || {});

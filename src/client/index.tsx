@@ -1,3 +1,5 @@
+import "Support/remote";
+
 import { createRoot } from "react-dom/client";
 
 import { forceVal } from "Support/nullable";

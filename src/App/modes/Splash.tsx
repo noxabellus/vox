@@ -16,6 +16,7 @@ import githubImg from "Assets/github.svg?raw";
 import kofiImg from "Assets/kofi.svg?raw";
 import patreonImg from "Assets/patreon.svg?raw";
 import itchImg from "Assets/itch-io.svg?raw";
+import { useWindow } from "Model/WindowInfo";
 
 
 const Body = styled(Column)`
@@ -65,9 +66,11 @@ const CustomInlineIcon = styled(Button.InlineIcon)`
 
 
 export default function Splash () {
+    const [_windowInfo, windowDispatch] = useWindow();
     const [app, appDispatch] = useApp();
 
-    // remote.setWindowSizeMemo(440, 400, false, false);
+    windowDispatch({type: "set-window-size", value: [440, 400]});
+    windowDispatch({type: "set-window-mode", value: "widget"});
 
     return <Body>
         <CustomInlineIcon title="Close Vox [Alt+F4]" svg={closeImg} onClick={() => appDispatch({type: "close"})} />

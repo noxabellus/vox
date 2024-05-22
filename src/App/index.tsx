@@ -1,18 +1,17 @@
 import { FunctionComponent, ReactElement } from "react";
 
-import "Support/remote";
 import { unreachable } from "Support/panic";
 
 import { createDocument } from "Document";
 
 import { App as Model } from "Model/App";
 import { createEditor } from "Model/Editor";
+import { WindowInfo } from "Model/WindowInfo";
 
 import Editor from "./modes/Editor";
 import Splash from "./modes/Splash";
 import MultiEditor from "./modes/MultiEditor";
 import UserSettings from "./modes/UserSettings";
-import { WindowInfo } from "Model/WindowInfo";
 
 
 const docs = [
@@ -34,7 +33,6 @@ function AppElement (): ReactElement {
     const windowInfo = WindowInfo.useStore({
         size: [440, 400],
         minimumSize: [440, 400],
-        position: [1, 1],
         mode: {name: "widget"},
         lastState: "normal"
     });

@@ -7,6 +7,7 @@ import Button from "Elements/Button";
 
 import { useApp } from "Model/App";
 import { UserSettingsMode } from "Model/Mode";
+import { useWindow } from "Model/WindowInfo";
 
 import backImg from "Assets/arrow-curve-180.svg?raw";
 import ToolSet from "Elements/ToolSet";
@@ -33,9 +34,12 @@ const CustomToolSet = styled(ToolSet)`
 
 
 export default function UserSettings () {
+    const [_windowInfo, windowDispatch] = useWindow();
     const [app, appDispatch] = useApp();
     const lastMode = (app.mode as UserSettingsMode).lastMode;
-    // remote.setWindowSizeMemo(800, 600);
+
+    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
+    windowDispatch({type: "set-window-mode", value: "edit"});
 
     return <Column>
         <TitleBar title="Vox User Settings" style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}} />

@@ -12,6 +12,7 @@ import TitleBar from "Elements/TitleBar";
 import Editor from "../Editor";
 
 import Divider from "./Divider";
+import { useWindow } from "Model/WindowInfo";
 
 
 export type MultiEditorProps = {
@@ -20,14 +21,16 @@ export type MultiEditorProps = {
 
 
 export default function MultiEditor ({editorIds}: MultiEditorProps) {
+    const [_, windowDispatch] = useWindow();
     const [app, appDispatch] = useApp();
 
-    // remote.setWindowSizeMemo(800, 600);
+    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
+    windowDispatch({type: "set-window-mode", value: "edit"});
 
     useEffect(() => {
         console.log("editorIds effect");
 
-        // remote.window.setMinimumSize(MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 400);
+        windowDispatch({type: "set-window-minimum-size", value: [MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 600]});
 
         let size = window.innerWidth - (editorIds.length - 1) * 12;
 

@@ -63,10 +63,9 @@ win.on("close", async (e) => {
 win.on("ready-to-show", () => win.show());
 
 win.loadFile(path.join(clientDir, "index.html"));
-// win.setMinimumSize(600, 400);
+
 win.webContents.session.setSpellCheckerEnabled(false);
-// win.setFullScreen(true);
-// win.webContents.openDevTools();
+
 win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };

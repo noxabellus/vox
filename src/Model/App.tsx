@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext } from "react";
+import React, { ReactNode, createContext, useContext } from "react";
 
 import RangeOf from "Support/RangeOf";
 import { assert, unreachable } from "Support/panic";
@@ -65,6 +65,17 @@ export function isAction (action: Action): action is Action {
     return ActionNames.includes(action.type as ActionName);
 }
 
+export function useState (instance: Instance): [App, Dispatch] {
+    const [app, updateApp] = React.useState<App>(instance.model);
+
+    async function appDispatch (action: Action) {
+        instance.model = await reducer(instance.model, action);
+        updateApp(instance.model);
+    }
+
+    return [app, appDispatch];
+}
+
 
 const AppCtx = createContext<App>(null as any);
 const DispatchCtx = createContext<Dispatch>(null as any);
@@ -86,8 +97,7 @@ export function Provider ({app, dispatch, children}: ProviderProps) {
 
 
 export type Instance = {
-    model: App,
-    reducer: (state: App, action: Action) => Promise<App>,
+    model: App
 };
 
 

@@ -12,6 +12,9 @@ const ScrollStyles = styled(Scrollbar)`
     justify-content: stretch;
     align-items: stretch;
 
+    border: 1px solid rgb(var(--accent-color));
+    background: rgb(var(--background-color));
+
     & .ScrollbarsCustom-Wrapper {
         inset: 0px;
         overflow: hidden;

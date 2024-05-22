@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 
 import { assert } from "Support/panic";
-import * as remote from "Support/remote";
 
 import { useApp } from "Model/App";
 import { Editor as EditorModel, MIN_WIDTH } from "Model/Editor";
 
 import Spacer from "Elements/Spacer";
 import { Column, Row } from "Elements/layout";
+import TitleBar from "Elements/TitleBar";
 
 import Editor from "../Editor";
 
 import Divider from "./Divider";
-import TitleBar from "./TitleBar";
 
 
 export type MultiEditorProps = {
@@ -23,11 +22,12 @@ export type MultiEditorProps = {
 export default function MultiEditor ({editorIds}: MultiEditorProps) {
     const [app, appDispatch] = useApp();
 
+    // remote.setWindowSizeMemo(800, 600);
 
     useEffect(() => {
         console.log("editorIds effect");
 
-        remote.window.setMinimumSize(MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 400);
+        // remote.window.setMinimumSize(MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 400);
 
         let size = window.innerWidth - (editorIds.length - 1) * 12;
 

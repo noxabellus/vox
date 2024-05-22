@@ -12,7 +12,9 @@ import closeImg from "Assets/xmark.svg?raw";
 
 export type TitleBarProps = LocalTitleBarProps & PropsOf<typeof CustomToolSet>;
 
-type LocalTitleBarProps = {};
+type LocalTitleBarProps = {
+    title?: string,
+};
 
 
 const CustomToolSet = styled(ToolSet)`
@@ -27,10 +29,10 @@ const CustomToolSet = styled(ToolSet)`
 `;
 
 
-export default function TitleBar (props: TitleBarProps) {
+export default function TitleBar ({title, ...props}: TitleBarProps) {
     const [_app, appDispatch] = useApp();
     return <CustomToolSet {...props}>
-        <h1>Vox</h1>
+        <h1>{title || "Vox"}</h1>
         <Button.InlineIcon svg={closeImg} onClick={() => appDispatch({type: "close"})} />
     </CustomToolSet>;
 }

@@ -1,16 +1,18 @@
-import { FunctionComponent, ReactElement, useState } from "react";
+import { FunctionComponent, ReactElement } from "react";
 
-import * as remote from "Support/remote";
+import "Support/remote";
 import { unreachable } from "Support/panic";
 
 import { createDocument } from "Document";
 
-import { App as Model, reducer } from "Model/App";
+import { App as Model } from "Model/App";
 import { createEditor } from "Model/Editor";
 
 import Editor from "./modes/Editor";
 import Splash from "./modes/Splash";
 import MultiEditor from "./modes/MultiEditor";
+import UserSettings from "./modes/UserSettings";
+import { WindowInfo } from "Model/WindowInfo";
 
 
 const docs = [
@@ -25,53 +27,46 @@ export type App
     ;
 
 
-function AppElement (): ReactElement {
-    const [app, updateApp] = useState(App.model);
 
-    async function appDispatch (action: Model.Action) {
-        App.model = await reducer(App.model, action);
-        updateApp(App.model);
-    }
+function AppElement (): ReactElement {
+    const [app, appDispatch] = Model.useState(App);
+
+    const windowInfo = WindowInfo.useStore({
+        size: [440, 400],
+        minimumSize: [440, 400],
+        position: [1, 1],
+        mode: {name: "widget"},
+        lastState: "normal"
+    });
 
 
     let mode;
-
     switch (app.mode.name) {
         case "splash": {
-            remote.window.setMinimumSize(440, 400);
-            remote.window.setSize(440, 400, false);
-            remote.window.setResizable(false);
             mode = <Splash />;
         } break;
 
         case "editor": {
-            remote.window.setMinimumSize(800, 600);
-            remote.window.setSize(800, 600, true);
-            remote.window.setResizable(true);
             mode = <Editor editorId={app.mode.editorId} />;
         } break;
 
         case "multi-editor": {
-            remote.window.setMinimumSize(800, 600);
-            remote.window.setSize(800, 600, true);
-            remote.window.setResizable(true);
             mode = <MultiEditor editorIds={app.mode.editorIds} />;
         } break;
 
         case "user-settings": {
-            remote.window.setMinimumSize(800, 600);
-            remote.window.setSize(800, 600, true);
-            remote.window.setResizable(true);
-            unreachable("User Settings Mode not implemented");
+            mode = <UserSettings />;
         } break;
 
         default: unreachable("Invalid App Mode", app.mode);
     }
 
 
-    return <Model.Provider app={app} dispatch={appDispatch}>
-        {mode}
-    </Model.Provider>;
+    return <WindowInfo.Provider value={windowInfo}>
+        <Model.Provider app={app} dispatch={appDispatch}>
+            {mode}
+        </Model.Provider>
+    </WindowInfo.Provider>;
 }
 
 

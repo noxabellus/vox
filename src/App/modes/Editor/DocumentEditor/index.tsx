@@ -27,10 +27,8 @@ export type DocumentEditorProps = {
 
 
 const CustomScrollRegion = styled(ScrollRegion)`
-    border: 1px solid rgb(var(--accent-color));
     border-top: none;
     border-bottom: none;
-    background: rgb(var(--background-color));
 `;
 
 

@@ -37,6 +37,8 @@ export default function Editor ({editorId}: EditorProps) {
     const [selection, setSelection] = useState(makeRangeRef(editor.slate, editor.slate.selection));
     const [focused, setFocused] = useState(Api.isFocused(editor.slate));
 
+    // remote.setWindowSizeMemo(800, 600);
+
     const valueHandler = (_document: Descendant[]) => {
         setTextMarks(Api.marks(editor.slate) || {});
     };

@@ -4,12 +4,29 @@ import * as remote from "@electron/remote";
 
 export type OnCloseCallback = ((exit: () => void) => void) | null;
 
+export type OnReloadCallback = ((reload: () => void) => void) | null;
 
 export const terminal: Console = (remote.app as any).console;
 
-export const hooks: {onClose: OnCloseCallback} = (remote.app as any).hooks;
+export const hooks: {onClose: OnCloseCallback, onReload: OnReloadCallback} = (remote.app as any).hooks;
 
 export const window = remote.getCurrentWindow();
+
+
+let listeners: (() => void)[] = [];
+
+export function addBeforeUnload(listener: () => void) {
+    listeners.push(listener);
+}
+
+export function removeBeforeUnload(listener: () => void) {
+    listeners = listeners.filter(l => l !== listener);
+}
+
+hooks.onReload = reload => {
+    for (const listener of listeners) listener();
+    reload();
+};
 
 
 export function setWindowSize (width: number, height: number, maximizable: boolean = true, resizable: boolean = true) {

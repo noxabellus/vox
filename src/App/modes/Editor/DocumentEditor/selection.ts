@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { HexRgba } from "Support/color";
-import { Vec2, rangeCompare, rectsOverlap, vec2Compare } from "Support/math";
+import { Vec2, rangeCompare, rectsOverlap, v2comp } from "Support/math";
 
 import { Api, Selection, Slate } from "Model/Slate";
 
@@ -170,7 +170,7 @@ export function selectionStep (state: SelectionState) {
     screenRect.height += 200;
 
     const scroll = [scrollNode.scrollLeft, scrollNode.scrollTop] as Vec2;
-    if (rangeCompare(domRange, state.lastRange) && vec2Compare(scroll, state.lastScroll)) return;
+    if (rangeCompare(domRange, state.lastRange) && v2comp(scroll, state.lastScroll)) return;
 
     state.lastRange = domRange;
     state.lastScroll = scroll;

@@ -39,8 +39,8 @@ export default function Editor ({editorId}: EditorProps) {
     const [selection, setSelection] = useState(makeRangeRef(editor.slate, editor.slate.selection));
     const [focused, setFocused] = useState(Api.isFocused(editor.slate));
 
-    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
-    windowDispatch({type: "set-window-mode", value: "edit"});
+    windowDispatch({type: "set-minimum-size", value: [800, 600]});
+    windowDispatch({type: "set-resizable", value: true});
 
     const valueHandler = (_document: Descendant[]) => {
         setTextMarks(Api.marks(editor.slate) || {});

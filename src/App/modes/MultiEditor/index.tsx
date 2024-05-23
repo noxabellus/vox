@@ -24,13 +24,13 @@ export default function MultiEditor ({editorIds}: MultiEditorProps) {
     const [_, windowDispatch] = useWindow();
     const [app, appDispatch] = useApp();
 
-    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
-    windowDispatch({type: "set-window-mode", value: "edit"});
+    windowDispatch({type: "set-minimum-size", value: [800, 600]});
+    windowDispatch({type: "set-resizable", value: true});
 
     useEffect(() => {
         console.log("editorIds effect");
 
-        windowDispatch({type: "set-window-minimum-size", value: [MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 600]});
+        windowDispatch({type: "set-minimum-size", value: [MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 600]});
 
         let size = window.innerWidth - (editorIds.length - 1) * 12;
 

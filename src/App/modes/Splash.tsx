@@ -66,11 +66,12 @@ const CustomInlineIcon = styled(Button.InlineIcon)`
 
 
 export default function Splash () {
-    const [_windowInfo, windowDispatch] = useWindow();
+    const [windowInfo, windowDispatch, windowDispatchOnce] = useWindow();
     const [app, appDispatch] = useApp();
 
-    windowDispatch({type: "set-window-size", value: [440, 400]});
-    windowDispatch({type: "set-window-mode", value: "widget"});
+    windowDispatchOnce({type: "set-state", value: "normal"});
+    windowDispatchOnce({type: "set-size", value: [440, 400]});
+    windowDispatchOnce({type: "set-resizable", value: false});
 
     return <Body>
         <CustomInlineIcon title="Close Vox [Alt+F4]" svg={closeImg} onClick={() => appDispatch({type: "close"})} />
@@ -84,7 +85,10 @@ export default function Splash () {
         <ButtonPanel>
             <Button.Icon title="New Vox [Ctrl+N]" svg={newFileImg} />
             <Button.Icon title="Open Vox [Ctrl+O]" svg={openFileImg} />
-            <Button.Icon title="User Settings [Ctrl+`]" svg={settingsImg} onClick={() => appDispatch({type: "switch-mode", value: {name: "user-settings", lastMode: app.mode}})} />
+            <Button.Icon title="User Settings [Ctrl+`]" svg={settingsImg} onClick={() => {
+                windowDispatch({type: "set-state", value: windowInfo.lastState});
+                appDispatch({type: "switch-mode", value: {name: "user-settings", lastMode: app.mode}});
+            }} />
         </ButtonPanel>
     </Body>;
 }

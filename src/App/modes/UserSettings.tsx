@@ -13,20 +13,28 @@ import backImg from "Assets/arrow-curve-180.svg?raw";
 import ToolSet from "Elements/ToolSet";
 
 
-const CustomScrollRegion = styled(ScrollRegion)`
+const CustomScrollRegion = styled(ScrollRegion).attrs<{$inset: boolean}>(({$inset}) => ({
+    style: {
+        "--track-height": $inset? "calc(100% - ((.75em + var(--gap) * 2 + 2px) * 2 + var(--gap) * 3))" : "calc(100% - var(--gap) * 4)",
+    } as any,
+}))`
     border-top: none;
     border-bottom-left-radius: var(--minor-border-radius);
     border-bottom-right-radius: var(--minor-border-radius);
 
     & .ScrollbarsCustom-TrackY {
-        top: calc((.75em + var(--gap) * 2 + 2px) * 2 + var(--gap));
-        height: calc(100% - ((.75em + var(--gap) * 2 + 2px) * 2 + var(--gap) * 3));
+        height: var(--track-height);
     }
 `;
 
-const CustomToolSet = styled(ToolSet)`
-    position: absolute;
-    top: calc(.75em + var(--gap) * 2 + 2px);
+const CustomToolSet = styled(ToolSet).attrs<{$inset: boolean}>(({$inset}) => ({
+    style: {
+        "--inset-pos": $inset? "absolute" : "relative",
+        "--inset-top": $inset? "calc(100% - ((.75em + var(--gap) * 2 + 2px) + var(--gap) * 5))" : "0",
+    } as any,
+}))`
+    position: var(--inset-pos);
+    top: var(--inset-top);
     align-self: flex-end;
     justify-self: flex-end;
     margin: var(--gap);
@@ -34,19 +42,21 @@ const CustomToolSet = styled(ToolSet)`
 
 
 export default function UserSettings () {
-    const [_windowInfo, windowDispatch] = useWindow();
+    const [windowInfo, _windowDispatch, windowDispatchOnce] = useWindow();
     const [app, appDispatch] = useApp();
     const lastMode = (app.mode as UserSettingsMode).lastMode;
 
-    windowDispatch({type: "set-window-minimum-size", value: [800, 600]});
-    windowDispatch({type: "set-window-mode", value: "edit"});
+    windowDispatchOnce({type: "set-minimum-size", value: [800, 600]});
+    windowDispatchOnce({type: "set-resizable", value: true});
+
+    const inset = windowInfo.state != "normal";
 
     return <Column>
         <TitleBar title="Vox User Settings" style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}} />
-        <CustomScrollRegion>
+        <CustomScrollRegion $inset={inset}>
             <div style={{height: "2000px"}} />
         </CustomScrollRegion>
-        <CustomToolSet>
+        <CustomToolSet $inset={inset}>
             <Button.Icon title={`Return to ${lastMode.name} [Alt+Backspace]`} svg={backImg} onClick={() => appDispatch({type: "switch-mode", value: lastMode})} />
         </CustomToolSet>
     </Column>;

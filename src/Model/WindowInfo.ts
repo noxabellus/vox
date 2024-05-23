@@ -1,8 +1,8 @@
 import * as remote from "Support/remote";
 import RangeOf from "Support/RangeOf";
-import { Vec2, v2add, v2comp, v2divS, v2sub } from "Support/math";
+import { Vec2 } from "Support/math";
 import { assert, unreachable } from "Support/panic";
-import { createContext, useContext, useSyncExternalStore } from "react";
+import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
 
 
 export * as WindowInfo from "./WindowInfo";
@@ -11,129 +11,149 @@ export * as WindowInfo from "./WindowInfo";
 export type WindowInfo = {
     size: Vec2,
     minimumSize: Vec2,
-    mode: WindowMode
-    lastState: WindowState,
-};
-
-
-export type WindowMode
-    = WidgetMode
-    | EditMode
-    ;
-
-export type WidgetMode = {
-    name: "widget"
-};
-
-export type EditMode = {
-    name: "edit",
-    state: WindowState,
+    resizable: boolean,
+    state: State,
+    lastState: State,
 };
 
 
 export type Action
-    = SetWindowSize
-    | SetWindowMinimumSize
-    | SetWindowState
-    | SetWindowMode
+    = SetSize
+    | SetMinimumSize
+    | SetState
+    | SetResizable
+    | PostSize
+    | PostState
     ;
 
-export type SetWindowSize = {
-    type: "set-window-size",
+export type SetSize = {
+    type: "set-size",
     value: Vec2,
 };
 
-export type SetWindowMinimumSize = {
-    type: "set-window-minimum-size",
+export type SetMinimumSize = {
+    type: "set-minimum-size",
     value: Vec2,
 };
 
-export type SetWindowState = {
-    type: "set-window-state",
-    value: WindowState,
+export type SetState = {
+    type: "set-state",
+    value: State,
 };
 
-export type SetWindowMode = {
-    type: "set-window-mode",
-    value: WindowModeName,
+export type SetResizable = {
+    type: "set-resizable",
+    value: boolean,
+};
+
+export type PostSize = {
+    type: "post-size",
+    value: Vec2,
+};
+
+export type PostState = {
+    type: "post-state",
+    value: State,
 };
 
 
 export type ActionType = Action["type"];
-export const ActionTypes = RangeOf<ActionType>()("set-window-size", "set-window-minimum-size", "set-window-state", "set-window-mode");
+export const ActionTypes = RangeOf<ActionType>()("set-size", "set-minimum-size", "set-state", "set-resizable", "post-size", "post-state");
 
 export function isAction (value: any): value is Action {
     return value && ActionTypes.includes(value.type);
 }
 
 
-export type WindowModeName = WindowMode["name"];
-export const WindowModeNames = RangeOf<WindowModeName>()("widget", "edit");
 
-export function isWindowMode (value: any): value is WindowMode {
-    return value && WindowModeNames.includes(value.name);
+
+export const States = ["normal", "maximized", "minimized", "fullscreen"] as const;
+export type State = typeof States[number];
+
+export function isState (value: any): value is State {
+    return States.includes(value);
 }
 
-export function isWidgetMode (value: WindowMode): value is WidgetMode {
-    return value.name === "widget";
+function getWindowState (): State {
+    return remote.window.isMaximized() ? "maximized" : remote.window.isMinimized() ? "minimized" : remote.window.isFullScreen() ? "fullscreen" : "normal";
 }
 
-export function isEditMode (value: WindowMode): value is EditMode {
-    return value.name === "edit";
-}
+function setWindowState (state: State) {
+    switch (state) {
+        case "normal": {
+            remote.window.restore();
+            remote.window.unmaximize();
+            remote.window.setFullScreen(false);
+        } break;
 
+        case "maximized": {
+            remote.window.maximize();
+        } break;
 
+        case "minimized": {
+            remote.window.minimize();
+        } break;
 
+        case "fullscreen": {
+            remote.window.setFullScreen(true);
+        } break;
 
-export const WindowStates = ["normal", "maximized", "minimized", "fullscreen"] as const;
-export type WindowState = typeof WindowStates[number];
-
-export function isWindowState (value: any): value is WindowState {
-    return WindowStates.includes(value);
+        default: unreachable("Invalid WindowState", state);
+    }
 }
 
 
 const Ctx = createContext<WindowInfo>(undefined as any);
 export const Provider = Ctx.Provider;
 
-export function useStore (defaultInfo: WindowInfo) {
-    DEFAULT_INFO = defaultInfo;
+export function useStore () {
     return useSyncExternalStore(subscribe, getSnapshot);
 }
 
-export function useWindow(): [WindowInfo, (action: Action) => void] {
-    return [useContext(Ctx), dispatch];
+export function useWindow(): [WindowInfo, (action: Action) => void, (action: Action) => void] {
+    return [useContext(Ctx), dispatch, (action: Action) => useMemo(() => {
+        console.log("windowDispatch once");
+        dispatch(action);
+    }, [])];
 }
-
-let DEFAULT_INFO: WindowInfo = undefined as any;
 
 let INFO: WindowInfo = {
     size: [1, 1],
     minimumSize: [1, 1],
-    mode: {name: "widget"},
+    state: "normal",
     lastState: "normal",
+    resizable: true,
 };
 
 let LISTENER: (() => void) | null = null;
 
-let STATE_UPDATE = false;
-
 function subscribe (listener: () => void) {
     assert(LISTENER === null, "WindowInfo listener already exists");
 
-    INFO = DEFAULT_INFO;
+    INFO.size = remote.window.getSize() as Vec2;
+    INFO.minimumSize = remote.window.getMinimumSize() as Vec2;
+    INFO.resizable = remote.window.isResizable();
+    INFO.state = getWindowState();
 
-    stateUpdate(INFO);
+    console.log("subscribe", INFO);
 
     LISTENER = listener;
 
-    const resizeHandler = () => emit({type: "set-window-size", value: remote.window.getSize() as Vec2});
-    const maximizeHandler = () => emit({type: "set-window-state", value: "maximized"});
-    const unmaximizeHandler = () => emit({type: "set-window-state", value: INFO.lastState});
-    const minimizeHandler = () => emit({type: "set-window-state", value: "minimized"});
-    const restoreHandler = () => emit({type: "set-window-state", value: INFO.lastState});
-    const enterFullScreenHandler = () => emit({type: "set-window-state", value: "fullscreen"});
-    const leaveFullScreenHandler = () => emit({type: "set-window-state", value: INFO.lastState});
+    const eventHandler = (handler: () => void): () => void => {
+        return () => {
+            handler();
+            INFO = {...INFO};
+            LISTENER?.();
+        };
+    };
+
+    const resizeHandler = eventHandler(() => dispatch({type: "post-size", value: remote.window.getSize() as Vec2}));
+    const maximizeHandler = eventHandler(() => dispatch({type: "post-state", value: "maximized"}));
+    const unmaximizeHandler = eventHandler(() => dispatch({type: "post-state", value: INFO.lastState}));
+    const minimizeHandler = eventHandler(() => dispatch({type: "post-state", value: "minimized"}));
+    const restoreHandler = eventHandler(() => dispatch({type: "post-state", value: INFO.lastState}));
+    const enterFullScreenHandler = eventHandler(() => dispatch({type: "post-state", value: "fullscreen"}));
+    const leaveFullScreenHandler = eventHandler(() => dispatch({type: "post-state", value: INFO.lastState}));
 
     remote.window.on("resize", resizeHandler);
     remote.window.on("maximize", maximizeHandler);
@@ -170,125 +190,70 @@ function getSnapshot (): WindowInfo {
 
 
 function dispatch (action: Action) {
-    const updated = reducer(action, true);
-
-    if (updated) LISTENER?.();
-}
-
-function emit (action: Action) {
-    if (STATE_UPDATE) return;
-
-    const updated = reducer(action, false);
-
-    if (updated) LISTENER?.();
-}
-
-function reducer (action: Action, pushState: boolean): boolean {
     switch (action.type) {
-        case "set-window-size": {
-            if (v2comp(INFO.size, action.value)) return false;
-            INFO.size = action.value;
-            if (INFO.size[0] < INFO.minimumSize[0]) INFO.minimumSize[0] = INFO.size[0];
-            if (INFO.size[1] < INFO.minimumSize[1]) INFO.minimumSize[1] = INFO.size[1];
+        case "set-size": {
+            console.log("setting size", action.value, INFO.size, INFO.resizable, INFO.state);
+
+            INFO.size[0] = action.value[0];
+            INFO.size[1] = action.value[1];
+
+            if (INFO.size[0] < INFO.minimumSize[0] || INFO.size[1] < INFO.minimumSize[1]) {
+                INFO.minimumSize[0] = INFO.size[0];
+                INFO.minimumSize[1] = INFO.size[1];
+
+                remote.window.setMinimumSize(...INFO.minimumSize);
+            }
+
+            remote.window.setSize(...INFO.size, false);
         } break;
 
-        case "set-window-minimum-size": {
-            if (v2comp(INFO.minimumSize, action.value)) return false;
-            INFO.minimumSize = action.value;
-            if (INFO.size[0] < action.value[0]) INFO.size[0] = action.value[0];
-            if (INFO.size[1] < action.value[1]) INFO.size[1] = action.value[1];
+        case "set-minimum-size": {
+            console.log("setting minimum size", action.value, INFO.state);
+
+            INFO.minimumSize[0] = action.value[0];
+            INFO.minimumSize[1] = action.value[1];
+
+            remote.window.setMinimumSize(...INFO.minimumSize);
+
+            if (INFO.size[0] < INFO.minimumSize[0] || INFO.size[1] < INFO.minimumSize[1]) {
+                INFO.size[0] = INFO.minimumSize[0];
+                INFO.size[1] = INFO.minimumSize[1];
+
+                remote.window.setSize(...INFO.size, false);
+            }
         } break;
 
-        case "set-window-state": {
-            assert(INFO.mode.name === "edit");
+        case "set-state": {
+            console.log("setting state", action.value, INFO.state);
 
-            if (INFO.mode.state === action.value) return false;
-            INFO.lastState = INFO.mode.state;
-            INFO.mode.state = action.value;
+            INFO.lastState = getWindowState();
+            INFO.state = action.value;
+
+            setWindowState(INFO.state);
         } break;
 
-        case "set-window-mode": {
-            if (action.value === "edit" && INFO.mode.name !== "edit") {
-                INFO.mode = {name: "edit", state: INFO.lastState};
-            } else if (action.value === "widget" && INFO.mode.name !== "widget") {
-                INFO.lastState = INFO.mode.state;
-                INFO.mode = {name: "widget"};
-            } else return false;
+        case "set-resizable": {
+            console.log("setting resizable", action.value, INFO.state);
+
+            INFO.resizable = action.value;
+
+            remote.window.setResizable(INFO.resizable);
+        } break;
+
+        case "post-size": {
+            console.log("posting size", action.value, INFO.size, INFO.state);
+
+            INFO.size[0] = action.value[0];
+            INFO.size[1] = action.value[1];
+        } break;
+
+        case "post-state": {
+            console.log("posting state", action.value, INFO.state);
+
+            INFO.lastState = INFO.state;
+            INFO.state = action.value;
         } break;
 
         default: unreachable("Invalid WindowInfo Action", action);
     }
-
-    if (pushState) stateUpdate(INFO);
-
-    return true;
-}
-
-function stateUpdate (info: WindowInfo) {
-    STATE_UPDATE = true;
-
-    switch (info.mode.name) {
-        case "widget": {
-            remote.window.restore();
-            remote.window.setFullScreen(false);
-            remote.window.unmaximize();
-
-            const prevPos = remote.window.getPosition() as Vec2;
-            const prevSize = remote.window.getSize() as Vec2;
-            const prevCen = v2add(prevPos, v2divS(prevSize, 2));
-
-            remote.window.setMinimumSize(...info.minimumSize);
-            remote.window.setSize(...info.size, false);
-            remote.window.setResizable(false);
-            remote.window.setMinimumSize(...info.minimumSize);
-
-            const newSize = remote.window.getSize() as Vec2;
-            if (!v2comp(prevSize, newSize)) {
-                remote.window.setPosition(...v2sub(prevCen, v2divS(newSize, 2)));
-            }
-        } break;
-
-        case "edit": {
-            if (info.mode.state !== "fullscreen") remote.window.setFullScreen(false);
-
-            switch (info.mode.state) {
-                case "normal": {
-                    remote.window.restore();
-                    remote.window.unmaximize();
-
-                    const prevPos = remote.window.getPosition() as Vec2;
-                    const prevSize = remote.window.getSize() as Vec2;
-                    const prevCen = v2add(prevPos, v2divS(prevSize, 2));
-
-                    remote.window.setMinimumSize(...info.minimumSize);
-                    remote.window.setSize(...info.size, false);
-                    remote.window.setResizable(true);
-                    remote.window.setMinimumSize(...info.minimumSize);
-
-                    const newSize = remote.window.getSize() as Vec2;
-                    if (!v2comp(prevSize, newSize)) {
-                        remote.window.setPosition(...v2sub(prevCen, v2divS(newSize, 2)));
-                    }
-                } break;
-
-                case "maximized": {
-                    remote.window.restore();
-                    remote.window.maximize();
-                } break;
-
-                case "minimized": {
-                    remote.window.minimize();
-                } break;
-
-                case "fullscreen": {
-                    remote.window.restore();
-                    remote.window.setFullScreen(true);
-                } break;
-            }
-        } break;
-
-        default: unreachable("Invalid WindowMode", info.mode);
-    }
-
-    setTimeout(() => { STATE_UPDATE = false; });
 }

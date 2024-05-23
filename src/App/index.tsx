@@ -30,12 +30,7 @@ export type App
 function AppElement (): ReactElement {
     const [app, appDispatch] = Model.useState(App);
 
-    const windowInfo = WindowInfo.useStore({
-        size: [440, 400],
-        minimumSize: [440, 400],
-        mode: {name: "widget"},
-        lastState: "normal"
-    });
+    const windowInfo = WindowInfo.useStore();
 
 
     let mode;

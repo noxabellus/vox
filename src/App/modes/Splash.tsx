@@ -73,6 +73,7 @@ export default function Splash () {
     windowDispatchOnce({type: "set-size", value: [440, 400]});
     windowDispatchOnce({type: "set-resizable", value: false});
 
+
     return <Body>
         <CustomInlineIcon title="Close Vox [Alt+F4]" svg={closeImg} onClick={() => appDispatch({type: "close"})} />
         <CustomSvg src={logoImg} />

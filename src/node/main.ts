@@ -23,83 +23,73 @@ await app.whenReady();
 // await sleep(500); // hack to get around transparency glitch on linux, no longer necessary on debian
 
 
-let win: BrowserWindow = null as any;
-
 let forceClose = false;
 let dirty = false;
 let needHardReset = false;
 
-function makeWindow () {
-    if (win) {
-        forceClose = true;
-        win.close();
-        forceClose = false;
+
+const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    useContentSize: true,
+    show: false,
+    webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+    },
+    frame: false,
+    transparent: true,
+});
+
+// hack to get around weird behavior with the close/onbeforeunload events
+type OnCloseCallback = ((exit: () => void) => void) | null;
+type OnReloadCallback = ((reload: () => void) => void) | null;
+
+const hooks: {onClose: OnCloseCallback, onReload: OnReloadCallback} = {
+    onClose: null,
+    onReload: null,
+};
+
+(app as any).hooks = hooks;
+
+win.on("close", async (e) => {
+    const callback = hooks.onClose;
+
+    if (!forceClose && callback) {
+        e.preventDefault();
+
+        callback(() => {
+            hooks.onClose = null;
+            win.close();
+        });
     }
+});
 
-    win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        useContentSize: true,
-        show: false,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        },
-        frame: false,
-        transparent: true,
-    });
 
-    // hack to get around weird behavior with the close/onbeforeunload events
-    type OnCloseCallback = ((exit: () => void) => void) | null;
-    type OnReloadCallback = ((reload: () => void) => void) | null;
+remoteMain.enable(win.webContents);
 
-    const hooks: {onClose: OnCloseCallback, onReload: OnReloadCallback} = {
-        onClose: null,
-        onReload: null,
-    };
+win.on("ready-to-show", () => win.show());
 
-    (app as any).hooks = hooks;
+win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+});
 
-    win.on("close", async (e) => {
-        const callback = hooks.onClose;
+win.webContents.session.setSpellCheckerEnabled(false);
 
-        if (!forceClose && callback) {
-            e.preventDefault();
+win.webContents.loadFile(path.join(clientDir, "index.html"));
 
-            callback(() => {
-                hooks.onClose = null;
-                win.close();
-            });
-        }
-    });
-
-    win.on("ready-to-show", () => win.show());
-
-    win.loadFile(path.join(clientDir, "index.html"));
-
-    win.webContents.session.setSpellCheckerEnabled(false);
-
-    win.webContents.setWindowOpenHandler(({ url }) => {
-        shell.openExternal(url);
-        return { action: "deny" };
-    });
-
-    globalShortcut.register("CommandOrControl+Shift+I", () => {
-        if (win.webContents.isDevToolsOpened()) {
-            win.webContents.closeDevTools();
-        } else {
-            win.webContents.openDevTools({
-                mode: "detach",
-                title: "Vox DevTools",
-                activate: true,
-            });
-        }
-    });
-
-    remoteMain.enable(win.webContents);
-}
-
-makeWindow();
+globalShortcut.register("CommandOrControl+Shift+I", () => {
+    if (win.webContents.isDevToolsOpened()) {
+        win.webContents.closeDevTools();
+    } else {
+        win.webContents.openDevTools({
+            mode: "detach",
+            title: "Vox DevTools",
+            activate: true,
+        });
+    }
+});
 
 
 
@@ -117,7 +107,6 @@ makeWindow();
     }
 })();
 
-
 setInterval(() => {
     if (needHardReset) {
         console.info("need hard reset, reloading electron");
@@ -131,12 +120,14 @@ setInterval(() => {
         dirty = false;
         const hooks = (app as any).hooks;
         if (hooks.onReload) {
+            console.info("have hook");
             hooks.onReload(() => {
                 hooks.onReload = null;
-                makeWindow();
+                win.webContents.reload();
             });
         } else {
-            makeWindow();
+            console.log("no hook");
+            win.webContents.reload();
         }
     }
 }, 1000);

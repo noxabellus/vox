@@ -12,19 +12,24 @@ export const hooks: {onClose: OnCloseCallback, onReload: OnReloadCallback} = (re
 
 export const window = remote.getCurrentWindow();
 
+export type ListenerId = number & {__isListenerId: true};
+const listeners: {[K in ListenerId]: (() => void)} = {};
+let listenerId = 0;
 
-let listeners: (() => void)[] = [];
-
-export function addBeforeUnload(listener: () => void) {
-    listeners.push(listener);
+export function addBeforeUnload(listener: () => void): ListenerId {
+    const id = listenerId++ as ListenerId;
+    listeners[id] = listener;
+    return id;
 }
 
-export function removeBeforeUnload(listener: () => void) {
-    listeners = listeners.filter(l => l !== listener);
+export function removeBeforeUnload(id: ListenerId) {
+    delete listeners[id];
 }
 
 hooks.onReload = reload => {
-    for (const listener of listeners) listener();
+    for (const listener of Object.values(listeners)) {
+        listener();
+    }
     reload();
 };
 

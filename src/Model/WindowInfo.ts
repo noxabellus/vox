@@ -122,16 +122,19 @@ function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "st
 
                 remote.window.on("resize" as any, handler);
 
+                let teardownId: remote.ListenerId | null = null;
+
                 const teardown = () => {
                     if (listener !== null) {
                         listener = null;
 
                         remote.window.off(eventName as any, handler);
-                        remote.removeBeforeUnload(teardown);
+
+                        if (teardownId) remote.removeBeforeUnload(teardownId);
                     }
                 };
 
-                remote.addBeforeUnload(teardown);
+                teardownId = remote.addBeforeUnload(teardown);
 
                 return teardown;
             }, getter];
@@ -155,6 +158,8 @@ function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "st
                 if (!stop) handle = requestAnimationFrame(loop);
             });
 
+            let teardownId: remote.ListenerId | null = null;
+
             const teardown = () => {
                 if (LISTENER !== null) {
                     LISTENER = null;
@@ -162,11 +167,11 @@ function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "st
                     stop = true;
                     cancelAnimationFrame(handle);
 
-                    remote.removeBeforeUnload(teardown);
+                    if (teardownId) remote.removeBeforeUnload(teardownId);
                 }
             };
 
-            remote.addBeforeUnload(teardown);
+            teardownId = remote.addBeforeUnload(teardown);
 
             return [listener => {
                 assert(LISTENER === null);
@@ -181,6 +186,7 @@ function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "st
             const edges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
 
             let LISTENER: (() => void) | null = null;
+            let teardownId: remote.ListenerId | null = null;
 
             const handler = () => { LISTENER?.(); };
 
@@ -196,11 +202,11 @@ function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "st
                         remote.window.off(edge as any, handler);
                     }
 
-                    remote.removeBeforeUnload(teardown);
+                    if (teardownId) remote.removeBeforeUnload(teardownId);
                 }
             };
 
-            remote.addBeforeUnload(teardown);
+            teardownId = remote.addBeforeUnload(teardown);
 
             return [listener => {
                 assert(LISTENER === null);

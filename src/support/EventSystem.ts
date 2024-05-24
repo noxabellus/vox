@@ -20,14 +20,26 @@ function simpleCompare (a: any, b: any): boolean {
     return a === b;
 }
 
-export function EventSystem<T> (onSetup: (dispatch: () => void) => (() => void), onStep: () => T, compare: (a: T, b: T) => boolean = simpleCompare): EventSystem<T> {
-    const listeners: {[K in EventListenerId]: (value: T) => void}= [];
+export type EventSystemImpl<T> = {
+    onStep(): T,
+    onTeardown?: () => void,
+    onCompare?: (a: T, b: T) => boolean,
+}
+
+type ListenerTable<T> = {[K in EventListenerId]: (value: T) => void};
+
+export function EventSystem<T> (onSetup: (dispatch: () => void) => EventSystemImpl<T>): EventSystem<T> {
+    const listeners: ListenerTable<T> = {};
 
     let idCounter = 0;
 
+
+    const {onStep, onTeardown, onCompare} = onSetup(dispatch);
+    const compare = onCompare ?? simpleCompare;
+
     let value = onStep();
 
-    const dispatch = () => {
+    function dispatch () {
         const newValue = onStep();
 
         if (compare(value, newValue)) return;
@@ -38,8 +50,6 @@ export function EventSystem<T> (onSetup: (dispatch: () => void) => (() => void),
             listener(value);
         }
     };
-
-    const onTeardown = onSetup(dispatch);
 
     const teardownId = remote.addBeforeUnload(teardown);
 
@@ -53,7 +63,7 @@ export function EventSystem<T> (onSetup: (dispatch: () => void) => (() => void),
             delete listeners[id];
         }
 
-        onTeardown();
+        onTeardown?.();
 
         remote.removeBeforeUnload(teardownId);
     };
@@ -75,20 +85,47 @@ export function EventSystem<T> (onSetup: (dispatch: () => void) => (() => void),
     };
 }
 
-export function ReactEventSystem<T> (system: EventSystem<T>): ReactEventSystem<T> {
+export function StateEventSystem<T> (initialValue: T, onCompare?: (a: T, b: T) => boolean): EventSystem<T> & { set value (newValue: T) } {
+    let value = initialValue;
+
+    const listeners: ListenerTable<T> = {};
+    let idCounter = 0;
+
+    const compare = onCompare ?? simpleCompare;
+
     return {
         addListener (listener) {
-            const id = system.addListener(listener);
-            return () => { system.removeListener(id); };
+            const id = idCounter++ as EventListenerId;
+            listeners[id] = listener;
+            return id;
         },
 
-        teardown: system.teardown,
+        removeListener (id) {
+            delete listeners[id];
+        },
 
-        get value () { return system.value; },
+        teardown () {
+            for (const key of Object.keys(listeners)) {
+                const id = parseInt(key) as EventListenerId;
+                delete listeners[id];
+            }
+        },
+
+        get value () { return value; },
+
+        set value (newValue) {
+            if (compare(value, newValue)) return;
+
+            value = newValue;
+
+            for (const listener of Object.values(listeners)) {
+                listener(value);
+            }
+        }
     };
 }
 
-export function AnimEventSystem<T> (onStep: () => T, compare: (a: T, b: T) => boolean = simpleCompare): EventSystem<T> {
+export function AnimEventSystem<T> (onStep: () => T, onCompare?: (a: T, b: T) => boolean): EventSystem<T> {
     let stop = false;
 
     let handle: number | null = null;
@@ -103,12 +140,27 @@ export function AnimEventSystem<T> (onStep: () => T, compare: (a: T, b: T) => bo
                 if (!stop) handle = requestAnimationFrame(loop);
             });
 
-            return () => {
-                stop = true;
-                if (handle !== null) cancelAnimationFrame(handle);
+            return {
+                onStep,
+                onCompare,
+                onTeardown () {
+                    stop = true;
+                    if (handle !== null) cancelAnimationFrame(handle);
+                },
             };
-        },
-        onStep,
-        compare
+        }
     );
+}
+
+export function ReactEventSystem<T> (system: EventSystem<T>): ReactEventSystem<T> {
+    return {
+        addListener (listener) {
+            const id = system.addListener(listener);
+            return () => { system.removeListener(id); };
+        },
+
+        teardown: system.teardown,
+
+        get value () { return system.value; },
+    };
 }

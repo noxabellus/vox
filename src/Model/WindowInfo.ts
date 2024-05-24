@@ -3,7 +3,7 @@ import RangeOf from "Support/RangeOf";
 import { Vec2, v2comp } from "Support/math";
 import { unreachable } from "Support/panic";
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
-import { AnimEventSystem, EventSystem, ReactEventSystem } from "Support/EventSystem";
+import { AnimEventSystem, EventSystem, ReactEventSystem, StateEventSystem } from "Support/EventSystem";
 
 export * as WindowInfo from "./WindowInfo";
 
@@ -13,7 +13,7 @@ export type WindowInfo = {
     minimumSize: Vec2,
     resizable: boolean,
     state: State,
-    readonly lastState: State,
+    lastState: State,
 };
 
 
@@ -44,6 +44,7 @@ export type SetResizable = {
     value: boolean,
 };
 
+
 export type ActionType = Action["type"];
 export const ActionTypes = RangeOf<ActionType>()("set-size", "set-minimum-size", "set-state", "set-resizable");
 
@@ -55,8 +56,8 @@ export function isAction (value: any): value is Action {
 export const States = ["normal", "maximized", "minimized", "fullscreen"] as const;
 export type State = typeof States[number];
 
-type StateEdge = typeof StateEdges[number];
 const StateEdges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
+type StateEdge = typeof StateEdges[number];
 
 
 async function doStateChange (stateEdge: StateEdge | null): Promise<void> {
@@ -173,60 +174,57 @@ const Ctx = createContext<WindowInfo>(undefined as any);
 export const Provider = Ctx.Provider;
 
 
-const ResizeEvent = EventSystem<Vec2>(
-    dispatch => {
-        const filter = () => {
-            if (StateEvent.value !== "normal") return;
-            dispatch();
-        };
-        remote.window.on("resize", filter);
-        return () => remote.window.off("resize", filter);
-    },
-    () => remote.window.getSize() as Vec2,
-    v2comp
-);
+const ResizeEvent = EventSystem<Vec2>(dispatch => {
+    const filter = () => {
+        if (StateEvent.value !== "normal") return;
+        dispatch();
+    };
+
+    remote.window.on("resize", filter);
+
+    return {
+        onStep () {
+            return remote.window.getSize() as Vec2;
+        },
+
+        onCompare: v2comp,
+
+        onTeardown () {
+            remote.window.off("resize", filter);
+        },
+    };
+});
 
 const MinimumSizeEvent = AnimEventSystem<Vec2>(() => remote.window.getMinimumSize() as Vec2, v2comp);
 
 const ResizableEvent = AnimEventSystem<boolean>(() => remote.window.isResizable());
 
-const StateEvent = EventSystem<State>(
-    dispatch => {
+const StateEvent = EventSystem<State>(dispatch => {
+    for (const edge of StateEdges) {
+        remote.window.on(edge as any, dispatch);
+    }
 
-        for (const edge of StateEdges) {
-            remote.window.on(edge as any, dispatch);
-        }
+    return {
+        onStep: getState,
 
-        return () => {
+        onCompare () { return false; },
+
+        onTeardown () {
             for (const edge of StateEdges) {
                 remote.window.off(edge as any, dispatch);
             }
-        };
-    },
-    getState,
-);
+        },
+    };
+});
 
-let LAST_STATE: State = getState();
+const LastStateEvent = StateEventSystem<State>(StateEvent.value);
 
-const LastStateEvent = EventSystem<State>(
-    dispatch => {
-        let SECOND_STATE = LAST_STATE;
-
-        const id = StateEvent.addListener(newValue => {
-            LAST_STATE = SECOND_STATE;
-            SECOND_STATE = newValue;
-            dispatch();
-        });
-
-        return () => StateEvent.removeListener(id);
-    },
-    () => LAST_STATE
-);
 
 const ResizeEventReact = ReactEventSystem(ResizeEvent);
 const MinimumSizeEventReact = ReactEventSystem(MinimumSizeEvent);
 const ResizableEventReact = ReactEventSystem(ResizableEvent);
 const StateEventReact = ReactEventSystem(StateEvent);
+const LastStateEventReact = ReactEventSystem(LastStateEvent);
 
 
 export function useStore (): WindowInfo {
@@ -241,7 +239,7 @@ export function useStore (): WindowInfo {
         ],
         resizable: useSyncExternalStore(ResizableEventReact.addListener, () => ResizableEventReact.value),
         state: useSyncExternalStore(StateEventReact.addListener, () => StateEventReact.value),
-        get lastState () { return LastStateEvent.value; }
+        lastState: useSyncExternalStore(LastStateEventReact.addListener, () => LastStateEventReact.value),
     };
 }
 
@@ -255,15 +253,17 @@ export function useWindow(): [WindowInfo, (action: Action) => void, (action: Act
 }
 
 
-const DISPATCH_QUEUE: (() => Promise<void>)[] = [];
+type Executor = () => (Promise<void> | void);
 
-function enqueue (executor: () => Promise<void>) {
+const DISPATCH_QUEUE: Executor[] = [];
+
+function enqueue (executor: Executor) {
     DISPATCH_QUEUE.push(executor);
 }
 
 function dispatch (action: Action) {
     switch (action.type) {
-        case "set-size": enqueue(async () => {
+        case "set-size": enqueue(() => {
             const minimumSize = remote.window.getMinimumSize();
 
             if (minimumSize[0] > action.value[0] || minimumSize[1] > action.value[1]) {
@@ -273,7 +273,7 @@ function dispatch (action: Action) {
             remote.window.setSize(...action.value, false);
         }); break;
 
-        case "set-minimum-size": enqueue(async () => {
+        case "set-minimum-size": enqueue(() => {
             const size = remote.window.getSize();
 
             if (size[0] < action.value[0] || size[1] < action.value[1]) {
@@ -284,10 +284,11 @@ function dispatch (action: Action) {
         }); break;
 
         case "set-state": enqueue(async () => {
+            LastStateEvent.value = getState();
             await setState(action.value);
         }); break;
 
-        case "set-resizable": enqueue(async () => {
+        case "set-resizable": enqueue(() => {
             remote.window.setResizable(action.value);
         }); break;
 

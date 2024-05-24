@@ -55,13 +55,14 @@ export function isAction (value: any): value is Action {
 export const States = ["normal", "maximized", "minimized", "fullscreen"] as const;
 export type State = typeof States[number];
 
-export type WindowStateEdge = typeof WindowStateEdges[number];
-export const WindowStateEdges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
+type StateEdge = typeof StateEdges[number];
+const StateEdges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
 
 
-async function doWindowStateChange (stateEdge: WindowStateEdge | null): Promise<void> {
+async function doStateChange (stateEdge: StateEdge | null): Promise<void> {
     return new Promise((resolve, reject) => {
         let resolved = false;
+
         const resolver = () => {
             resolved = true;
             resolve();
@@ -74,12 +75,11 @@ async function doWindowStateChange (stateEdge: WindowStateEdge | null): Promise<
         switch (stateEdge) {
             case null:
                 return (
-                    doWindowStateChange("unmaximize")
-                        .then(() => doWindowStateChange("restore"))
-                        .then(() => doWindowStateChange("leave-full-screen"))
+                    doStateChange("unmaximize")
+                        .then(() => doStateChange("restore"))
+                        .then(() => doStateChange("leave-full-screen"))
                         .then(resolve)
                 );
-
 
             case "maximize":
                 if (remote.window.isMaximized()) return resolver();
@@ -129,7 +129,7 @@ async function doWindowStateChange (stateEdge: WindowStateEdge | null): Promise<
                     return;
                 }
 
-            default: reject(`invalid WindowStateEdge ${stateEdge}`);
+            default: reject(`invalid StateEdge ${stateEdge}`);
         }
     });
 }
@@ -138,23 +138,33 @@ export function isState (value: any): value is State {
     return States.includes(value);
 }
 
-function getWindowState (): State {
-    return remote.window.isMaximized() ? "maximized" : remote.window.isMinimized() ? "minimized" : remote.window.isFullScreen() ? "fullscreen" : "normal";
+function getState (): State {
+    return remote.window.isMaximized()
+         ? "maximized"
+         : remote.window.isMinimized()
+            ? "minimized"
+            : remote.window.isFullScreen()
+                ? "fullscreen"
+                : "normal"
+         ;
 }
 
-async function setWindowState (state: State) {
+async function setState (state: State) {
     switch (state) {
         case "maximized":
-            return doWindowStateChange("maximize");
+            return doStateChange("maximize");
 
         case "minimized":
-            return doWindowStateChange("minimize");
+            return doStateChange("minimize");
 
         case "fullscreen":
-            return doWindowStateChange("enter-full-screen");
+            return doStateChange("enter-full-screen");
 
         case "normal":
-            return doWindowStateChange(null);
+            return doStateChange(null);
+
+        default:
+            unreachable("Invalid window State", state);
     }
 }
 
@@ -183,20 +193,20 @@ const ResizableEvent = AnimEventSystem<boolean>(() => remote.window.isResizable(
 const StateEvent = EventSystem<State>(
     dispatch => {
 
-        for (const edge of WindowStateEdges) {
+        for (const edge of StateEdges) {
             remote.window.on(edge as any, dispatch);
         }
 
         return () => {
-            for (const edge of WindowStateEdges) {
+            for (const edge of StateEdges) {
                 remote.window.off(edge as any, dispatch);
             }
         };
     },
-    getWindowState,
+    getState,
 );
 
-let LAST_STATE: State = getWindowState();
+let LAST_STATE: State = getState();
 
 const LastStateEvent = EventSystem<State>(
     dispatch => {
@@ -217,6 +227,7 @@ const ResizeEventReact = ReactEventSystem(ResizeEvent);
 const MinimumSizeEventReact = ReactEventSystem(MinimumSizeEvent);
 const ResizableEventReact = ReactEventSystem(ResizableEvent);
 const StateEventReact = ReactEventSystem(StateEvent);
+
 
 export function useStore (): WindowInfo {
     return {
@@ -273,7 +284,7 @@ function dispatch (action: Action) {
         }); break;
 
         case "set-state": enqueue(async () => {
-            await setWindowState(action.value);
+            await setState(action.value);
         }); break;
 
         case "set-resizable": enqueue(async () => {

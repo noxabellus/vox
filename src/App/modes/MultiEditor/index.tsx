@@ -28,8 +28,6 @@ export default function MultiEditor ({editorIds}: MultiEditorProps) {
     windowDispatch({type: "set-resizable", value: true});
 
     useEffect(() => {
-        console.log("editorIds effect");
-
         windowDispatch({type: "set-minimum-size", value: [MIN_WIDTH * editorIds.length + (editorIds.length - 1) * 12, 600]});
 
         let size = window.innerWidth - (editorIds.length - 1) * 12;

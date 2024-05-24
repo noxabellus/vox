@@ -3,7 +3,7 @@ import { DependencyList, useMemo } from "react";
 export type RAF<T> = {
     state: T,
     onStep: (state: T) => void,
-    onStop: (state: T) => void,
+    onStop?: (state: T) => void,
 };
 
 type RAFData = {
@@ -47,7 +47,7 @@ export function RAF<T> (raf: RAF<T>): RAFHandles<T> {
             raf.stop = true;
             cancelAnimationFrame(raf.handle);
             setTimeout(() => {
-                raf.onStop(raf.state);
+                raf.onStop?.(raf.state);
                 delete RAF_STORE[id];
             });
         },

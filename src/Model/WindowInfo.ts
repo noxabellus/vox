@@ -1,8 +1,9 @@
 import * as remote from "Support/remote";
 import RangeOf from "Support/RangeOf";
-import { Vec2 } from "Support/math";
-import { assert, unreachable } from "Support/panic";
+import { Vec2, v2comp } from "Support/math";
+import { unreachable } from "Support/panic";
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
+import { AnimEventSystem, EventSystem, ReactEventSystem } from "Support/EventSystem";
 
 export * as WindowInfo from "./WindowInfo";
 
@@ -12,6 +13,7 @@ export type WindowInfo = {
     minimumSize: Vec2,
     resizable: boolean,
     state: State,
+    readonly lastState: State,
 };
 
 
@@ -53,34 +55,106 @@ export function isAction (value: any): value is Action {
 export const States = ["normal", "maximized", "minimized", "fullscreen"] as const;
 export type State = typeof States[number];
 
+export type WindowStateEdge = typeof WindowStateEdges[number];
+export const WindowStateEdges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
+
+
+async function doWindowStateChange (stateEdge: WindowStateEdge | null): Promise<void> {
+    return new Promise((resolve, reject) => {
+        let resolved = false;
+        const resolver = () => {
+            resolved = true;
+            resolve();
+        };
+
+        setTimeout(() => {
+            if (!resolved) reject(`unresolved windowStateChange ${stateEdge}`);
+        }, 500);
+
+        switch (stateEdge) {
+            case null:
+                return (
+                    doWindowStateChange("unmaximize")
+                        .then(() => doWindowStateChange("restore"))
+                        .then(() => doWindowStateChange("leave-full-screen"))
+                        .then(resolve)
+                );
+
+
+            case "maximize":
+                if (remote.window.isMaximized()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.maximize();
+                    return;
+                }
+
+            case "unmaximize":
+                if (!remote.window.isMaximized()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.unmaximize();
+                    return;
+                }
+
+            case "minimize":
+                if (remote.window.isMinimized()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.minimize();
+                    return;
+                }
+
+            case "restore":
+                if (!remote.window.isMinimized()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.restore();
+                    return;
+                }
+
+            case "enter-full-screen":
+                if (remote.window.isFullScreen()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.setFullScreen(true);
+                    return;
+                }
+
+            case "leave-full-screen":
+                if (!remote.window.isFullScreen()) return resolver();
+                else {
+                    remote.window.once(stateEdge, resolver);
+                    remote.window.setFullScreen(false);
+                    return;
+                }
+
+            default: reject(`invalid WindowStateEdge ${stateEdge}`);
+        }
+    });
+}
+
 export function isState (value: any): value is State {
     return States.includes(value);
 }
-
 
 function getWindowState (): State {
     return remote.window.isMaximized() ? "maximized" : remote.window.isMinimized() ? "minimized" : remote.window.isFullScreen() ? "fullscreen" : "normal";
 }
 
-function setWindowState (state: State) {
+async function setWindowState (state: State) {
     switch (state) {
-        case "maximized": {
-            if (!remote.window.isMaximized()) remote.window.maximize();
-        } break;
+        case "maximized":
+            return doWindowStateChange("maximize");
 
-        case "minimized": {
-            if (!remote.window.isMinimized()) remote.window.minimize();
-        } break;
+        case "minimized":
+            return doWindowStateChange("minimize");
 
-        case "fullscreen": {
-            if (!remote.window.isFullScreen()) remote.window.setFullScreen(true);
-        } break;
+        case "fullscreen":
+            return doWindowStateChange("enter-full-screen");
 
-        case "normal": {
-            if (remote.window.isMaximized()) remote.window.unmaximize();
-            if (remote.window.isMinimized()) remote.window.restore();
-            if (remote.window.isFullScreen()) remote.window.setFullScreen(false);
-        } break;
+        case "normal":
+            return doWindowStateChange(null);
     }
 }
 
@@ -89,18 +163,74 @@ const Ctx = createContext<WindowInfo>(undefined as any);
 export const Provider = Ctx.Provider;
 
 
+const ResizeEvent = EventSystem<Vec2>(
+    dispatch => {
+        const filter = () => {
+            if (StateEvent.value !== "normal") return;
+            dispatch();
+        };
+        remote.window.on("resize", filter);
+        return () => remote.window.off("resize", filter);
+    },
+    () => remote.window.getSize() as Vec2,
+    v2comp
+);
+
+const MinimumSizeEvent = AnimEventSystem<Vec2>(() => remote.window.getMinimumSize() as Vec2, v2comp);
+
+const ResizableEvent = AnimEventSystem<boolean>(() => remote.window.isResizable());
+
+const StateEvent = EventSystem<State>(
+    dispatch => {
+
+        for (const edge of WindowStateEdges) {
+            remote.window.on(edge as any, dispatch);
+        }
+
+        return () => {
+            for (const edge of WindowStateEdges) {
+                remote.window.off(edge as any, dispatch);
+            }
+        };
+    },
+    getWindowState,
+);
+
+let LAST_STATE: State = getWindowState();
+
+const LastStateEvent = EventSystem<State>(
+    dispatch => {
+        let SECOND_STATE = LAST_STATE;
+
+        const id = StateEvent.addListener(newValue => {
+            LAST_STATE = SECOND_STATE;
+            SECOND_STATE = newValue;
+            dispatch();
+        });
+
+        return () => StateEvent.removeListener(id);
+    },
+    () => LAST_STATE
+);
+
+const ResizeEventReact = ReactEventSystem(ResizeEvent);
+const MinimumSizeEventReact = ReactEventSystem(MinimumSizeEvent);
+const ResizableEventReact = ReactEventSystem(ResizableEvent);
+const StateEventReact = ReactEventSystem(StateEvent);
+
 export function useStore (): WindowInfo {
     return {
         size: [
-            useSyncExternalStore(...subscriber("resize", () => remote.window.getSize()[0])),
-            useSyncExternalStore(...subscriber("resize", () => remote.window.getSize()[1]))
+            useSyncExternalStore(ResizeEventReact.addListener, () => ResizeEventReact.value[0]),
+            useSyncExternalStore(ResizeEventReact.addListener, () => ResizeEventReact.value[1]),
         ],
         minimumSize: [
-            useSyncExternalStore(...subscriber("minimum-size", () => remote.window.getMinimumSize()[0])),
-            useSyncExternalStore(...subscriber("minimum-size", () => remote.window.getMinimumSize()[1]))
+            useSyncExternalStore(MinimumSizeEventReact.addListener, () => MinimumSizeEventReact.value[0]),
+            useSyncExternalStore(MinimumSizeEventReact.addListener, () => MinimumSizeEventReact.value[1]),
         ],
-        resizable: useSyncExternalStore(...subscriber("resizable", () => remote.window.isResizable())),
-        state: useSyncExternalStore(...subscriber("state-change", getWindowState)),
+        resizable: useSyncExternalStore(ResizableEventReact.addListener, () => ResizableEventReact.value),
+        state: useSyncExternalStore(StateEventReact.addListener, () => StateEventReact.value),
+        get lastState () { return LastStateEvent.value; }
     };
 }
 
@@ -114,115 +244,15 @@ export function useWindow(): [WindowInfo, (action: Action) => void, (action: Act
 }
 
 
-function subscriber<T> (eventName: "resize" | "minimum-size" | "resizable" | "state-change", getter: () => T): [(listener: () => void) => () => void, () => T] {
-    switch (eventName) {
-        case "resize":
-            return [(listener: (() => void) | null) => {
-                const handler = () => { listener?.(); };
+const DISPATCH_QUEUE: (() => Promise<void>)[] = [];
 
-                remote.window.on("resize" as any, handler);
-
-                let teardownId: remote.ListenerId | null = null;
-
-                const teardown = () => {
-                    if (listener !== null) {
-                        listener = null;
-
-                        remote.window.off(eventName as any, handler);
-
-                        if (teardownId) remote.removeBeforeUnload(teardownId);
-                    }
-                };
-
-                teardownId = remote.addBeforeUnload(teardown);
-
-                return teardown;
-            }, getter];
-
-        case "resizable":
-        case "minimum-size": {
-            let LISTENER:  (() => void) | null = null;
-
-            let stop = false;
-            let last = getter();
-
-            let handle = requestAnimationFrame(function loop () {
-                if (stop) return;
-
-                const current = getter();
-                if (current !== last) {
-                    last = current;
-                    LISTENER?.();
-                }
-
-                if (!stop) handle = requestAnimationFrame(loop);
-            });
-
-            let teardownId: remote.ListenerId | null = null;
-
-            const teardown = () => {
-                if (LISTENER !== null) {
-                    LISTENER = null;
-
-                    stop = true;
-                    cancelAnimationFrame(handle);
-
-                    if (teardownId) remote.removeBeforeUnload(teardownId);
-                }
-            };
-
-            teardownId = remote.addBeforeUnload(teardown);
-
-            return [listener => {
-                assert(LISTENER === null);
-
-                LISTENER = listener;
-
-                return teardown;
-            }, () => last];
-        }
-
-        case "state-change": {
-            const edges = ["maximize", "unmaximize", "minimize", "restore", "enter-full-screen", "leave-full-screen"] as const;
-
-            let LISTENER: (() => void) | null = null;
-            let teardownId: remote.ListenerId | null = null;
-
-            const handler = () => { LISTENER?.(); };
-
-            for (const edge of edges) {
-                remote.window.on(edge as any, handler);
-            }
-
-            const teardown = () => {
-                if (LISTENER !== null) {
-                    LISTENER = null;
-
-                    for (const edge of edges) {
-                        remote.window.off(edge as any, handler);
-                    }
-
-                    if (teardownId) remote.removeBeforeUnload(teardownId);
-                }
-            };
-
-            teardownId = remote.addBeforeUnload(teardown);
-
-            return [listener => {
-                assert(LISTENER === null);
-
-                LISTENER = listener;
-
-                return teardown;
-            }, getter];
-        }
-    }
+function enqueue (executor: () => Promise<void>) {
+    DISPATCH_QUEUE.push(executor);
 }
-
 
 function dispatch (action: Action) {
     switch (action.type) {
-        case "set-size": {
+        case "set-size": enqueue(async () => {
             const minimumSize = remote.window.getMinimumSize();
 
             if (minimumSize[0] > action.value[0] || minimumSize[1] > action.value[1]) {
@@ -230,9 +260,9 @@ function dispatch (action: Action) {
             }
 
             remote.window.setSize(...action.value, false);
-        } break;
+        }); break;
 
-        case "set-minimum-size": {
+        case "set-minimum-size": enqueue(async () => {
             const size = remote.window.getSize();
 
             if (size[0] < action.value[0] || size[1] < action.value[1]) {
@@ -240,16 +270,35 @@ function dispatch (action: Action) {
             }
 
             remote.window.setMinimumSize(...action.value);
-        } break;
+        }); break;
 
-        case "set-state": {
-            setWindowState(action.value);
-        } break;
+        case "set-state": enqueue(async () => {
+            await setWindowState(action.value);
+        }); break;
 
-        case "set-resizable": {
+        case "set-resizable": enqueue(async () => {
             remote.window.setResizable(action.value);
-        } break;
+        }); break;
 
         default: unreachable("Invalid WindowInfo Action", action);
     }
+}
+
+{
+    let stop = false;
+
+    let handle = requestAnimationFrame(async function dequeue () {
+        if (stop) return;
+
+        const action = DISPATCH_QUEUE.shift();
+
+        if (action) await action();
+
+        if (!stop) handle = requestAnimationFrame(dequeue);
+    });
+
+    remote.addBeforeUnload(() => {
+        stop = true;
+        cancelAnimationFrame(handle);
+    });
 }

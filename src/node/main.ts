@@ -29,8 +29,8 @@ let needHardReset = false;
 
 
 const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 440,
+    height: 400,
     useContentSize: true,
     show: false,
     webPreferences: {
@@ -120,13 +120,11 @@ setInterval(() => {
         dirty = false;
         const hooks = (app as any).hooks;
         if (hooks.onReload) {
-            console.info("have hook");
             hooks.onReload(() => {
                 hooks.onReload = null;
                 win.webContents.reload();
             });
         } else {
-            console.log("no hook");
             win.webContents.reload();
         }
     }

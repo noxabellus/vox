@@ -66,7 +66,7 @@ const CustomInlineIcon = styled(Button.InlineIcon)`
 
 
 export default function Splash () {
-    const [_windowInfo, _windowDispatch, windowDispatchOnce] = useWindow();
+    const [windowInfo, windowDispatch, windowDispatchOnce] = useWindow();
     const [app, appDispatch] = useApp();
 
     windowDispatchOnce({type: "set-state", value: "normal"});
@@ -87,6 +87,8 @@ export default function Splash () {
             <Button.Icon title="New Vox [Ctrl+N]" svg={newFileImg} />
             <Button.Icon title="Open Vox [Ctrl+O]" svg={openFileImg} />
             <Button.Icon title="User Settings [Ctrl+`]" svg={settingsImg} onClick={() => {
+                windowDispatch({type: "set-resizable", value: true});
+                windowDispatch({type: "set-state", value: windowInfo.lastState});
                 appDispatch({type: "switch-mode", value: {name: "user-settings", lastMode: app.mode}});
             }} />
         </ButtonPanel>

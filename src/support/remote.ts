@@ -71,4 +71,4 @@ export function setWindowSize (width: number, height: number, maximizable: boole
 export * from "@electron/remote";
 
 
-terminal.log("remote connected");
+terminal.info("remote connected");

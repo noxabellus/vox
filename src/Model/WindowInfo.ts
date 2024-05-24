@@ -62,15 +62,22 @@ type StateEdge = typeof StateEdges[number];
 
 async function doStateChange (stateEdge: StateEdge | null): Promise<void> {
     return new Promise((resolve, reject) => {
-        let resolved = false;
+        let state = "unfinished";
 
         const resolver = () => {
-            resolved = true;
+            state = "resolved";
             resolve();
         };
 
+        const rejecter = (reason: string) => {
+            if (state == "unfinished") {
+                state = "rejected";
+                reject(reason);
+            }
+        };
+
         setTimeout(() => {
-            if (!resolved) reject(`unresolved windowStateChange ${stateEdge}`);
+            rejecter(`unresolved windowStateChange ${stateEdge}`);
         }, 500);
 
         switch (stateEdge) {
@@ -79,7 +86,7 @@ async function doStateChange (stateEdge: StateEdge | null): Promise<void> {
                     doStateChange("unmaximize")
                         .then(() => doStateChange("restore"))
                         .then(() => doStateChange("leave-full-screen"))
-                        .then(resolve)
+                        .then(resolver)
                 );
 
             case "maximize":
@@ -130,7 +137,7 @@ async function doStateChange (stateEdge: StateEdge | null): Promise<void> {
                     return;
                 }
 
-            default: reject(`invalid StateEdge ${stateEdge}`);
+            default: rejecter(`invalid StateEdge ${stateEdge}`);
         }
     });
 }
@@ -253,7 +260,7 @@ export function useWindow(): [WindowInfo, (action: Action) => void, (action: Act
 }
 
 
-type Executor = () => (Promise<void> | void);
+type Executor = () => Promise<void>;
 
 const DISPATCH_QUEUE: Executor[] = [];
 
@@ -263,9 +270,8 @@ function enqueue (executor: Executor) {
 
 function dispatch (action: Action) {
     switch (action.type) {
-        case "set-size": enqueue(() => {
+        case "set-size": enqueue(async () => {
             const minimumSize = remote.window.getMinimumSize();
-
             if (minimumSize[0] > action.value[0] || minimumSize[1] > action.value[1]) {
                 remote.window.setMinimumSize(...action.value);
             }
@@ -273,10 +279,9 @@ function dispatch (action: Action) {
             remote.window.setSize(...action.value, false);
         }); break;
 
-        case "set-minimum-size": enqueue(() => {
-            const size = remote.window.getSize();
-
-            if (size[0] < action.value[0] || size[1] < action.value[1]) {
+        case "set-minimum-size": enqueue(async () => {
+            const previousSize = ResizeEvent.value;
+            if (previousSize[0] < action.value[0] || previousSize[1] < action.value[1]) {
                 remote.window.setSize(...action.value, false);
             }
 
@@ -288,7 +293,7 @@ function dispatch (action: Action) {
             await setState(action.value);
         }); break;
 
-        case "set-resizable": enqueue(() => {
+        case "set-resizable": enqueue(async () => {
             remote.window.setResizable(action.value);
         }); break;
 

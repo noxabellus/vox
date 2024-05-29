@@ -6,6 +6,64 @@ import { Vec2, rangeCompare, rectsOverlap, v2comp } from "Support/math";
 import { Api, Selection, Slate } from "Model/Slate";
 
 
+
+export type SelectionState = {
+    slate: Slate,
+    selected: Selection,
+    root?: HTMLDivElement,
+    container?: HTMLDivElement,
+    lastRange?: Range,
+    lastScroll?: Vec2,
+};
+
+export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba}>(({$focus, $textColor}) => ({
+    style: {
+        "--selection-opacity": $focus ? "0.4" : "0.2",
+        "--caret-color": $textColor,
+        "--animation-name": $focus ? "cursor-pulse" : "none",
+    } as any
+}))`
+    background: wheat;
+    margin: 1em;
+
+    & #selectionContainer {
+        position: relative;
+        height: 0;
+        overflow: show;
+    }
+
+    & .textSelection {
+        box-sizing: content-box;
+        position: absolute;
+        pointer-events: none;
+        background-color: rgba(255, 0, 255, var(--selection-opacity));
+    }
+
+    & .collapsed .textSelection {
+        width: 2px !important;
+        margin-left: -2px;
+        animation: var(--animation-name) 1s infinite;
+        background-color: rgb(255, 0, 255);
+        margin-top: -4px;
+        border-top: 5px solid var(--caret-color);
+        border-left: 2px solid var(--caret-color);
+        opacity: calc(0.7 - var(--selection-opacity));
+    }
+
+    caret-color: transparent;
+
+    & *::selection {
+        background: inherit;
+        color: inherit;
+    }
+
+    @keyframes cursor-pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+`;
+
 function createRects (scrollRect: DOMRect, root: Element, domRange: Range): DOMRect[] {
     const rootRect = root.getBoundingClientRect();
     const rects: DOMRect[] = [];
@@ -99,62 +157,7 @@ function updateSelection (nodeRects: DOMRect[]) {
     return root;
 }
 
-export const TextStyles = styled.div.attrs<{$focus: boolean, $textColor: HexRgba}>(({$focus, $textColor}) => ({
-    style: {
-        "--selection-opacity": $focus ? "0.4" : "0.2",
-        "--caret-color": $textColor,
-        "--animation-name": $focus ? "cursor-pulse" : "none",
-    } as any
-}))`
-    background: wheat;
-    margin: 1em;
 
-    & #selectionContainer {
-        position: relative;
-        height: 0;
-        overflow: show;
-    }
-
-    & .textSelection {
-        box-sizing: content-box;
-        position: absolute;
-        pointer-events: none;
-        background-color: rgba(255, 0, 255, var(--selection-opacity));
-    }
-
-    & .collapsed .textSelection {
-        width: 2px !important;
-        margin-left: -2px;
-        animation: var(--animation-name) 1s infinite;
-        background-color: rgb(255, 0, 255);
-        margin-top: -4px;
-        border-top: 5px solid var(--caret-color);
-        border-left: 2px solid var(--caret-color);
-        opacity: calc(0.7 - var(--selection-opacity));
-    }
-
-    caret-color: transparent;
-
-    & *::selection {
-        background: inherit;
-        color: inherit;
-    }
-
-    @keyframes cursor-pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0; }
-        100% { opacity: 1; }
-    }
-`;
-
-export type SelectionState = {
-    slate: Slate,
-    selected: Selection,
-    root?: HTMLDivElement,
-    container?: HTMLDivElement,
-    lastRange?: Range,
-    lastScroll?: Vec2,
-};
 
 export function selectionStep (state: SelectionState) {
     if (!state.root) return;

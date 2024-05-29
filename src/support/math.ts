@@ -439,21 +439,21 @@ export function v2comp (a?: Vec2, b?: Vec2, eps = Number.EPSILON): boolean {
     if (a === b) return true;
     if (!a || !b) return false;
 
-    return Math.abs(a[0] - b[0]) <= eps || Math.abs(a[1] - b[1]) <= eps;
+    return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps;
 }
 
 export function v3comp (a?: Vec3, b?: Vec3, eps = Number.EPSILON): boolean {
     if (a === b) return true;
     if (!a || !b) return false;
 
-    return Math.abs(a[0] - b[0]) <= eps || Math.abs(a[1] - b[1]) <= eps || Math.abs(a[2] - b[2]) <= eps;
+    return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps && Math.abs(a[2] - b[2]) <= eps;
 }
 
 export function v4comp (a?: Vec4, b?: Vec4, eps = Number.EPSILON): boolean {
     if (a === b) return true;
     if (!a || !b) return false;
 
-    return Math.abs(a[0] - b[0]) <= eps || Math.abs(a[1] - b[1]) <= eps || Math.abs(a[2] - b[2]) <= eps || Math.abs(a[3] - b[3]) <= eps;
+    return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps && Math.abs(a[2] - b[2]) <= eps && Math.abs(a[3] - b[3]) <= eps;
 }
 
 
